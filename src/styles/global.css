@@ -113,7 +113,7 @@ body {
 }
 
 /* =========================
-   HELPERS (substituindo Tailwind)
+   HELPERS
 ========================= */
 
 /* Backgrounds */
@@ -139,4 +139,57 @@ body {
 /* Radius */
 .rounded {
   border-radius: var(--radius);
+}
+
+/* =========================
+   TIPOGRAFIA
+========================= */
+
+.text-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.text-subtitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.text-body {
+  font-size: 1rem;
+}
+
+.text-small {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* =========================
+   LAYOUT
+========================= */
+
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem;
+  gap: 1rem;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .screen {
+    padding: 2.5rem;
+    align-items: center;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .screen {
+    max-width: 480px;
+    margin: 0 auto;
+  }
 }
