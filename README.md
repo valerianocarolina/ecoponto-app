@@ -8,7 +8,9 @@ O objetivo do projeto é conectar pessoas que desejam descartar resíduos recicl
 
 ## 📱 Demonstração do projeto
 
-<img width="774" height="540" alt="Captura de Tela 2026-03-13 às 14 46 01" src="https://github.com/user-attachments/assets/4f1f5bc9-6b96-41a7-8d0b-7042a84a0553" />
+<img width="1048" height="440" alt="Captura de Tela 2026-03-22 às 18 24 23" src="https://github.com/user-attachments/assets/342c0045-8270-44ac-8d1d-d21b4c4413b6" />
+<img width="842" height="440" alt="Captura de Tela 2026-03-22 às 18 24 14" src="https://github.com/user-attachments/assets/41de6cf6-cba9-4b7f-922d-86c35bdb807b" />
+
 
 ---
 
