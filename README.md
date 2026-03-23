@@ -13,7 +13,7 @@ O objetivo do projeto é conectar pessoas que desejam descartar resíduos recicl
 
 ---
 
-## 🏗 Arquitetura da splicação
+## 🏗 Arquitetura da aplicação
 
 <img width="1649" height="875" alt="Captura de Tela 2026-03-13 às 14 47 09" src="https://github.com/user-attachments/assets/402133ae-f221-4ba7-bd9c-3d0a02e018ad" />
 
