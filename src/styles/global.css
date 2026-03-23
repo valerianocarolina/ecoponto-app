@@ -1,6 +1,3 @@
-/* Fonte */
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
-
 /* =========================
    DESIGN TOKENS (cores)
 ========================= */
@@ -173,23 +170,30 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+
   justify-content: center;
+  align-items: center;
+
   padding: 1.5rem;
   gap: 1rem;
+}
+
+/* Container interno */
+.container {
+  width: 100%;
+  max-width: 380px;
 }
 
 /* Tablet */
 @media (min-width: 768px) {
   .screen {
     padding: 2.5rem;
-    align-items: center;
   }
 }
 
 /* Desktop */
 @media (min-width: 1024px) {
   .screen {
-    max-width: 480px;
-    margin: 0 auto;
+    padding: 3rem;
   }
 }
