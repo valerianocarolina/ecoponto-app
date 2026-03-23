@@ -11,10 +11,9 @@ O objetivo do projeto é conectar pessoas que desejam descartar resíduos recicl
 <img width="1048" height="440" alt="Captura de Tela 2026-03-22 às 18 24 23" src="https://github.com/user-attachments/assets/342c0045-8270-44ac-8d1d-d21b4c4413b6" />
 <img width="842" height="440" alt="Captura de Tela 2026-03-22 às 18 24 14" src="https://github.com/user-attachments/assets/41de6cf6-cba9-4b7f-922d-86c35bdb807b" />
 
-
 ---
 
-## 🏗 Arquitetura da splicação 
+## 🏗 Arquitetura da aplicação
 
 <img width="1649" height="875" alt="Captura de Tela 2026-03-13 às 14 47 09" src="https://github.com/user-attachments/assets/402133ae-f221-4ba7-bd9c-3d0a02e018ad" />
 
@@ -78,15 +77,15 @@ src
 └ assets
 ```
 
-| Pasta | Descrição |
-| :--- | :---: |
+| Pasta      |         Descrição         |
+| :--------- | :-----------------------: |
 | components | Componentes reutilizáveis |
-| pages | Telas da aplicação |
-| routes | Configuração das rotas |
-| services | Comunicação com APIs |
-| styles | Estilos globais |
-| types | Tipagens TypeScript |
-| assets | Imagens e recursos |
+| pages      |    Telas da aplicação     |
+| routes     |  Configuração das rotas   |
+| services   |   Comunicação com APIs    |
+| styles     |      Estilos globais      |
+| types      |    Tipagens TypeScript    |
+| assets     |    Imagens e recursos     |
 
 ---
 

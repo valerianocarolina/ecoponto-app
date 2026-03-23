@@ -1,0 +1,7 @@
+.appIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: hsl(var(--primary));
+}

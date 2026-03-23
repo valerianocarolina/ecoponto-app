@@ -1,0 +1,40 @@
+.button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s;
+
+  width: 100%;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.textTitle {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.button:hover {
+  border-color: hsl(var(--primary));
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--secondary));
+  color: hsl(var(--primary));
+}
