@@ -10,10 +10,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (user !== "empresa") {
+    if (!user) {
       router.push(routes.login);
     }
   }, [user, router]);
+
+  if (!user) return null;
 
   return <>{children}</>;
 }

@@ -9,6 +9,7 @@ import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
+import { login as loginRequest } from "@/services/auth";
 
 export default function Login() {
   const router = useRouter();
@@ -16,8 +17,9 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -25,8 +27,15 @@ export default function Login() {
       return;
     }
 
-    loginEmpresa();
-    router.push(routes.meusPontos);
+    try {
+      const data = await loginRequest(email, password);
+
+      loginEmpresa(data.token);
+
+      router.push(routes.meusPontos);
+    } catch (err: any) {
+      alert(err.message || "Erro ao fazer login");
+    }
   };
 
   return (
@@ -62,7 +71,9 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <PrimaryButton type="submit">Entrar</PrimaryButton>
+          <PrimaryButton type="submit" disabled={loading}>
+            {loading ? "Entrando..." : "Entrar"}
+          </PrimaryButton>
         </form>
 
         <div className={styles.footer}>

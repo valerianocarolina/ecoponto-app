@@ -9,6 +9,10 @@ import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
+import { register } from "@/services/auth";
+import { isValidCNPJ } from "@/util/validateCnpj";
+import { validateEmail } from "@/util/validateEmail";
+import { validatePhone } from "@/util/validatePhone";
 
 export default function Cadastro() {
   const router = useRouter();
@@ -21,12 +25,32 @@ export default function Cadastro() {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [cnpjError, setCnpjError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
 
   const set = (key: string, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidCNPJ(form.cnpj)) {
+      setCnpjError("CNPJ inválido");
+      return;
+    }
+
+    if (!validateEmail(form.email)) {
+      setEmailError("Email inválido");
+      return;
+    }
+
+    if (form.phone && !validatePhone(form.phone)) {
+      setPhoneError("Telefone inválido");
+      return;
+    }
 
     if (!form.name || !form.cnpj || !form.email || !form.password) {
       alert("Preencha os campos obrigatórios");
@@ -34,12 +58,28 @@ export default function Cadastro() {
     }
 
     if (form.password.length < 6) {
-      alert("Senha deve ter pelo menos 6 caracteres");
+      setPasswordError("Senha deve ter pelo menos 6 caracteres");
       return;
     }
 
-    loginEmpresa();
-    router.push(routes.meusPontos);
+    setLoading(true);
+
+    try {
+      const data = await register({
+        nome: form.name,
+        email: form.email,
+        telefone: form.phone,
+        documento: form.cnpj,
+        senha: form.password,
+      });
+
+      loginEmpresa(data.token);
+      router.push(routes.meusPontos);
+    } catch (err: any) {
+      alert(err.message || "Erro ao cadastrar");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,14 +113,22 @@ export default function Cadastro() {
             label="CNPJ *"
             placeholder="00.000.000/0000-00"
             value={form.cnpj}
-            onChange={(e) => set("cnpj", e.target.value)}
+            onChange={(e) => {
+              set("cnpj", e.target.value);
+              setCnpjError("");
+            }}
+            error={cnpjError}
           />
 
           <TextField
             label="Telefone"
             placeholder="(11) 99999-0000"
             value={form.phone}
-            onChange={(e) => set("phone", e.target.value)}
+            onChange={(e) => {
+              set("phone", e.target.value);
+              setPhoneError("");
+            }}
+            error={phoneError}
           />
 
           <TextField
@@ -88,7 +136,11 @@ export default function Cadastro() {
             type="email"
             placeholder="empresa@email.com"
             value={form.email}
-            onChange={(e) => set("email", e.target.value)}
+            onChange={(e) => {
+              set("email", e.target.value);
+              setEmailError("");
+            }}
+            error={emailError}
           />
 
           <TextField
@@ -96,10 +148,16 @@ export default function Cadastro() {
             type="password"
             placeholder="Mínimo 6 caracteres"
             value={form.password}
-            onChange={(e) => set("password", e.target.value)}
+            onChange={(e) => {
+              set("password", e.target.value);
+              setPasswordError("");
+            }}
+            error={passwordError}
           />
 
-          <PrimaryButton type="submit">Cadastrar Empresa</PrimaryButton>
+          <PrimaryButton type="submit" disabled={loading}>
+            {loading ? "Cadastrando..." : "Cadastrar Empresa"}
+          </PrimaryButton>
         </form>
 
         <div className={styles.footer}>
