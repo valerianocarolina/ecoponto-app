@@ -9,28 +9,36 @@
   text-align: left;
   cursor: pointer;
   transition: 0.2s;
-
   width: 100%;
+  height: auto;
+  white-space: normal;
+  font-family: inherit;
+  justify-content: start;
 }
 
 .text {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  color: hsl(var(--muted-foreground));
 }
 
 .textTitle {
   font-weight: 600;
+  font-size: 16px;
+  font-family: sans-serif;
   color: hsl(var(--foreground));
 }
 
 .button:hover {
-  border-color: hsl(var(--primary));
+  border-color: hsl(var(--primary)) !important;
+  background: hsl(var(--card));
 }
 
 .icon {
   width: 48px;
   height: 48px;
+  min-width: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;

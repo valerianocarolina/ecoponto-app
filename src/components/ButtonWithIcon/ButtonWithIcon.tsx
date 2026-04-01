@@ -1,3 +1,4 @@
+import { Button as AntButton } from "antd";
 import styles from "./styles.module.css";
 
 type Props = {
@@ -9,13 +10,12 @@ type Props = {
 
 export function Button({ title, description, icon, onClick }: Props) {
   return (
-    <button className={styles.button} onClick={onClick}>
+    <AntButton className={styles.button} onClick={onClick}>
       <div className={styles.icon}>{icon}</div>
-
       <div className={styles.text}>
-        <p className={`${styles.textTitle} text-body`}>{title}</p>
-        <p className="text-small">{description}</p>
+        <span className={styles.textTitle}>{title}</span>
+        <span className={styles.description}>{description}</span>
       </div>
-    </button>
+    </AntButton>
   );
 }

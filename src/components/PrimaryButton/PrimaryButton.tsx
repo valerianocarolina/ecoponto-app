@@ -1,11 +1,19 @@
+import { Button, ButtonProps } from "antd";
 import styles from "./styles.module.css";
 
-type Props = React.ButtonHTMLAttributes<HTMLButtonElement>;
+type PrimaryButtonProps = Omit<ButtonProps, "type"> & {
+  type?: "button" | "submit" | "reset";
+};
 
-export function PrimaryButton({ children, ...props }: Props) {
+export function PrimaryButton({ children, type, ...props }: PrimaryButtonProps) {
   return (
-    <button className={styles.primaryButton} {...props}>
+    <Button
+      className={styles.primaryButton}
+      {...props}
+      type="primary"
+      htmlType={type}
+    >
       {children}
-    </button>
+    </Button>
   );
 }
