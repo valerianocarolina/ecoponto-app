@@ -1,3 +1,4 @@
+import { Input } from "antd";
 import styles from "./styles.module.css";
 
 type Props = {
@@ -16,17 +17,18 @@ export function TextField({
   value,
   onChange,
   error,
-}: Props & { error?: string }) {
+}: Props) {
   return (
     <div className={styles.field}>
       <label className={styles.label}>{label}</label>
 
-      <input
+      <Input
         className={`${styles.fieldInput} ${error ? styles.error : ""}`}
         type={type}
         placeholder={placeholder}
         value={value}
-        onChange={onChange}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e)}
+        variant="borderless"
       />
 
       {error && <span className={styles.errorText}>{error}</span>}

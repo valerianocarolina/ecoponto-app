@@ -9,8 +9,10 @@
   font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
+  font-family: sans-serif;
 }
 
 .primaryButton:hover {
   opacity: 0.9;
+  background: hsl(var(--primary)) !important;
 }
