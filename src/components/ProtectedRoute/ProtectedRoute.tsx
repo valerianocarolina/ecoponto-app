@@ -5,17 +5,18 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { routes } from "@/routes/routes";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+export function ProtectedRoute(requiredTipo?: "user" | "cooperative") {
+  const { token, tipo } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
+    if (!token) {
       router.push(routes.login);
+      return;
     }
-  }, [user, router]);
 
-  if (!user) return null;
-
-  return <>{children}</>;
+    if (requiredTipo && tipo !== requiredTipo) {
+      router.push(routes.home);
+    }
+  }, [token, tipo]);
 }

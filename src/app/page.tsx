@@ -24,7 +24,7 @@ export default function Home() {
           title="Sou Cliente"
           description="Encontre pontos de coleta próximos a você"
           icon={<User />}
-          onClick={() => router.push(routes.mapa)}
+          onClick={() => router.push(routes.loginCliente)}
         />
 
         <Button

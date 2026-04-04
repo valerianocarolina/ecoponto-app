@@ -1,43 +1,75 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 type User = {
-  token: string;
-};
+  id?: string;
+  nome?: string;
+  email?: string;
+}
+
+type Tipo = "user" | "cooperative" | null;
 
 type AuthContextType = {
   user: User | null;
-  loginEmpresa: (token: string) => void;
+  token: string | null;
+  tipo: Tipo;
+
+  login: (data: any, tipo: Tipo) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  loginEmpresa: () => {},
+  token: null,
+  tipo: null,
+  login: () => {},
   logout: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null;
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [tipo, setTipo] = useState<Tipo>(null);
 
-    const token = localStorage.getItem("token");
-    return token ? { token } : null;
-  });
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+    const storedTipo = localStorage.getItem("tipo") as Tipo;
 
-  const loginEmpresa = (token: string) => {
+    if (storedToken && storedUser && storedTipo) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+      setTipo(storedTipo);
+    }
+  }, []);
+
+  const login = (data: any, tipo: Tipo) => {
+    const token = data.token;
+
+    const userData = tipo === "user" ? data.usuario : data.cooperativa;
+
+    setToken(token);
+    setUser(userData);
+    setTipo(tipo);
+
     localStorage.setItem("token", token);
-    setUser({ token });
-  };
+    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("tipo", tipo!);
+  }
 
   const logout = () => {
-    localStorage.removeItem("token");
+    setToken(null);
     setUser(null);
+    setTipo(null);
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("tipo");
   };
 
   return (
-    <AuthContext.Provider value={{ user, loginEmpresa, logout }}>
+    <AuthContext.Provider value={{ user, token, tipo, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
