@@ -9,11 +9,11 @@ import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
-import { login as loginRequest } from "@/services/auth";
+import { loginEmpresa as loginRequest } from "@/services/auth";
 
 export default function Login() {
   const router = useRouter();
-  const { loginEmpresa } = useAuth();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +30,7 @@ export default function Login() {
     try {
       const data = await loginRequest(email, password);
 
-      loginEmpresa(data.token);
+      login(data, "cooperative");
 
       router.push(routes.meusPontos);
     } catch (err: any) {

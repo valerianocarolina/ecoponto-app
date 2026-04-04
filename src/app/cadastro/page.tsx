@@ -9,14 +9,14 @@ import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
-import { register } from "@/services/auth";
+import { registerEmpresa } from "@/services/auth";
 import { isValidCNPJ } from "@/util/validateCnpj";
 import { validateEmail } from "@/util/validateEmail";
 import { validatePhone } from "@/util/validatePhone";
 
 export default function Cadastro() {
   const router = useRouter();
-  const { loginEmpresa } = useAuth();
+  const { login } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -65,7 +65,7 @@ export default function Cadastro() {
     setLoading(true);
 
     try {
-      const data = await register({
+      const data = await registerEmpresa({
         nome: form.name,
         email: form.email,
         telefone: form.phone,
@@ -73,7 +73,7 @@ export default function Cadastro() {
         senha: form.password,
       });
 
-      loginEmpresa(data.token);
+      login(data, "cooperative");
       router.push(routes.meusPontos);
     } catch (err: any) {
       alert(err.message || "Erro ao cadastrar");
