@@ -1,12 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type User = {
-  id?: string;
   nome?: string;
-  email?: string;
-}
+};
 
 type Tipo = "user" | "cooperative" | null;
 
@@ -14,62 +12,68 @@ type AuthContextType = {
   user: User | null;
   token: string | null;
   tipo: Tipo;
-
+  loading: boolean; // 🔥 NOVO
   login: (data: any, tipo: Tipo) => void;
   logout: () => void;
 };
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  token: null,
-  tipo: null,
-  login: () => {},
-  logout: () => {},
-});
+const AuthContext = createContext<AuthContextType>({} as any);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: any) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [tipo, setTipo] = useState<Tipo>(null);
+  const [loading, setLoading] = useState(true); // 🔥 começa true
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-    const storedTipo = localStorage.getItem("tipo") as Tipo;
+    const stored = localStorage.getItem("auth");
 
-    if (storedToken && storedUser && storedTipo) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      setTipo(storedTipo);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+
+      const isExpired = Date.now() > parsed.expiresAt;
+
+      if (!isExpired) {
+        setUser(parsed.user);
+        setToken(parsed.token);
+        setTipo(parsed.tipo);
+      } else {
+        localStorage.removeItem("auth");
+      }
     }
+
+    setLoading(false);
   }, []);
 
   const login = (data: any, tipo: Tipo) => {
     const token = data.token;
-
     const userData = tipo === "user" ? data.usuario : data.cooperativa;
+
+    const payload = {
+      token,
+      user: userData,
+      tipo,
+      expiresAt: Date.now() + 1000 * 60 * 60,
+    };
+
+    localStorage.setItem("auth", JSON.stringify(payload));
 
     setToken(token);
     setUser(userData);
     setTipo(tipo);
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("tipo", tipo!);
-  }
+  };
 
   const logout = () => {
-    setToken(null);
+    localStorage.removeItem("auth");
     setUser(null);
+    setToken(null);
     setTipo(null);
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("tipo");
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, tipo, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, tipo, login, logout, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
