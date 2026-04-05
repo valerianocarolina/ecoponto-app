@@ -9,5 +9,5 @@ export const routes = {
   cadastroCliente: "/cadastro/cliente",
 
   meusPontos: "/meus-pontos",
-  cadastraPontos: "/cadastra-pontos",
+  cadastraPontos: "/cadastrar-pontos",
 };

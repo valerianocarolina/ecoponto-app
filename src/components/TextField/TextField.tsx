@@ -8,6 +8,7 @@ type Props = {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
+  style?: React.CSSProperties;
 };
 
 export function TextField({
@@ -17,9 +18,10 @@ export function TextField({
   value,
   onChange,
   error,
+  style,
 }: Props) {
   return (
-    <div className={styles.field}>
+    <div className={styles.field} style={style}>
       <label className={styles.label}>{label}</label>
 
       <Input

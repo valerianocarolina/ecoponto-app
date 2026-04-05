@@ -1,8 +1,16 @@
 const BASE_URL = "https://ecoponto-api-08ow.onrender.com";
 
 export async function apiFetch(path: string, options?: RequestInit) {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  let token: string | null = null;
+
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("auth");
+
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      token = parsed.token;
+    }
+  }
 
   const res = await fetch(`${BASE_URL}${path}`, {
     headers: {
@@ -13,10 +21,15 @@ export async function apiFetch(path: string, options?: RequestInit) {
     ...options,
   });
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
 
   if (!res.ok) {
-    throw new Error(data.mensagem || "Erro na requisição");
+    throw new Error(data?.mensagem || "Erro na requisição");
   }
 
   return data;

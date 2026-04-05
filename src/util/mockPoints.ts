@@ -42,3 +42,53 @@ export const mockPoints = [
     image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952",
   },
 ];
+
+export type Point = {
+    id: string;
+    nome: string;
+    endereco: string;
+    horario: string;
+    tags: MaterialType[];
+    imagem?: string;
+}
+
+export function getMockPoints(): Point[] {
+  if (typeof window === "undefined") return [];
+
+  const data = localStorage.getItem("points");
+  return data ? JSON.parse(data) : [];
+}
+
+export function saveMockPoints(points: Point[]) {
+  localStorage.setItem("points", JSON.stringify(points));
+}
+
+export function createMockPoint(point: Omit<Point, "id">) {
+  const points = getMockPoints();
+
+  const newPoint: Point = {
+    id: crypto.randomUUID(),
+    ...point,
+  };
+
+  const updated = [...points, newPoint];
+  saveMockPoints(updated);
+
+  return newPoint;
+}
+
+export function deleteMockPoint(id: string) {
+  const points = getMockPoints();
+  const updated = points.filter((p) => p.id !== id);
+  saveMockPoints(updated);
+}
+
+export function updateMockPoint(id: string, data: Partial<Point>) {
+  const points = getMockPoints();
+
+  const updated = points.map((p) =>
+    p.id === id ? { ...p, ...data } : p
+  );
+
+  saveMockPoints(updated);
+}
