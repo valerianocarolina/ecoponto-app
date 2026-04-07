@@ -10,10 +10,12 @@ import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
 import { loginEmpresa as loginRequest } from "@/services/auth";
+import { useTranslations } from "next-intl";
 
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
+  const t = useTranslations("LoginEmpresa");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,18 +25,21 @@ export default function Login() {
     e.preventDefault();
 
     if (!email || !password) {
-      alert("Preencha todos os campos");
+      alert(t("missingData"));
       return;
     }
 
     try {
+      setLoading(true);
       const data = await loginRequest(email, password);
 
       login(data, "cooperative");
 
       router.push(routes.meusPontos);
     } catch (err: any) {
-      alert(err.message || "Erro ao fazer login");
+      alert(err.message || t("error"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,40 +50,40 @@ export default function Login() {
           className={styles.backButton}
           onClick={() => router.push(routes.home)}
         >
-          <ArrowLeft size={16} /> Voltar
+          <ArrowLeft size={16} /> {t("goBack")}
         </div>
 
         <div className={styles.header}>
           <AppIcon size={56} />
-          <h1 className="text-title">Login Empresa</h1>
-          <p className="text-small">Acesse a área de gerenciamento</p>
+          <h1 className="text-title">{t("title")}</h1>
+          <p className="text-small">{t("subtitle")}</p>
         </div>
 
         <form onSubmit={handleLogin} className={styles.form}>
           <TextField
-            label="Email"
+            label={t("email")}
             type="email"
-            placeholder="empresa@email.com"
+            placeholder={t("emailPlaceholder")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <TextField
-            label="Senha"
+            label={t("password")}
             type="password"
-            placeholder="••••••••"
+            placeholder={t("passwordPlaceholder")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <PrimaryButton type="submit" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? t("entering") : t("enter")}
           </PrimaryButton>
         </form>
 
         <div className={styles.footer}>
           <p className="text-small">
-            Não tem conta?{" "}
+            {t("noAccount")}
             <span
               style={{
                 color: "hsl(var(--primary))",
@@ -87,7 +92,7 @@ export default function Login() {
               }}
               onClick={() => router.push(routes.cadastro)}
             >
-              Cadastre sua empresa
+              {t("register")}
             </span>
           </p>
         </div>

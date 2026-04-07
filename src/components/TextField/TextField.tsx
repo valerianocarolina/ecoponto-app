@@ -9,6 +9,7 @@ type Props = {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   style?: React.CSSProperties;
+  disabled?: boolean;
 };
 
 export function TextField({
@@ -19,6 +20,7 @@ export function TextField({
   onChange,
   error,
   style,
+  disabled = false,
 }: Props) {
   return (
     <div className={styles.field} style={style}>
@@ -31,6 +33,7 @@ export function TextField({
         value={value}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e)}
         variant="borderless"
+        disabled={disabled}
       />
 
       {error && <span className={styles.errorText}>{error}</span>}

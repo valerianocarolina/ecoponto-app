@@ -13,10 +13,12 @@ import { registerEmpresa } from "@/services/auth";
 import { isValidCNPJ } from "@/util/validateCnpj";
 import { validateEmail } from "@/util/validateEmail";
 import { validatePhone } from "@/util/validatePhone";
+import { useTranslations } from "next-intl";
 
 export default function Cadastro() {
   const router = useRouter();
   const { login } = useAuth();
+  const t = useTranslations("CadastroEmpresa");
 
   const [form, setForm] = useState({
     name: "",
@@ -38,27 +40,27 @@ export default function Cadastro() {
     e.preventDefault();
 
     if (!isValidCNPJ(form.cnpj)) {
-      setCnpjError("CNPJ inválido");
+      setCnpjError(t("cnpjError"));
       return;
     }
 
     if (!validateEmail(form.email)) {
-      setEmailError("Email inválido");
+      setEmailError(t("emailError"));
       return;
     }
 
     if (form.phone && !validatePhone(form.phone)) {
-      setPhoneError("Telefone inválido");
+      setPhoneError(t("phoneError"));
       return;
     }
 
     if (!form.name || !form.cnpj || !form.email || !form.password) {
-      alert("Preencha os campos obrigatórios");
+      alert(t("missingData"));
       return;
     }
 
     if (form.password.length < 6) {
-      setPasswordError("Senha deve ter pelo menos 6 caracteres");
+      setPasswordError(t("passwordError"));
       return;
     }
 
@@ -76,7 +78,7 @@ export default function Cadastro() {
       login(data, "cooperative");
       router.push(routes.meusPontos);
     } catch (err: any) {
-      alert(err.message || "Erro ao cadastrar");
+      alert(err.message || t("error"));
     } finally {
       setLoading(false);
     }
@@ -90,28 +92,28 @@ export default function Cadastro() {
           onClick={() => router.push(routes.login)}
         >
           <ArrowLeft size={16} />
-          Voltar ao login
+          {t("goBack")}
         </div>
 
         <div className={styles.header}>
           <AppIcon size={56} />
 
-          <h1 className="text-title">Cadastro de Empresa</h1>
+          <h1 className="text-title">{t("title")}</h1>
 
-          <p className="text-small">Crie sua conta para gerenciar pontos</p>
+          <p className="text-small">{t("subtitle")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <TextField
-            label="Nome da Empresa *"
-            placeholder="EcoRecicla Ltda"
+            label={t("name")}
+            placeholder={t("namePlaceholder")}
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
           />
 
           <TextField
-            label="CNPJ *"
-            placeholder="00.000.000/0000-00"
+            label={t("cnpj")}
+            placeholder={t("cnpjPlaceholder")}
             value={form.cnpj}
             onChange={(e) => {
               set("cnpj", e.target.value);
@@ -121,8 +123,8 @@ export default function Cadastro() {
           />
 
           <TextField
-            label="Telefone"
-            placeholder="(11) 99999-0000"
+            label={t("phone")}
+            placeholder={t("phonePlaceholder")}
             value={form.phone}
             onChange={(e) => {
               set("phone", e.target.value);
@@ -132,9 +134,9 @@ export default function Cadastro() {
           />
 
           <TextField
-            label="Email *"
+            label={t("email")}
             type="email"
-            placeholder="empresa@email.com"
+            placeholder={t("emailPlaceholder")}
             value={form.email}
             onChange={(e) => {
               set("email", e.target.value);
@@ -144,9 +146,9 @@ export default function Cadastro() {
           />
 
           <TextField
-            label="Senha *"
+            label={t("password")}
             type="password"
-            placeholder="Mínimo 6 caracteres"
+            placeholder={t("passwordPlaceholder")}
             value={form.password}
             onChange={(e) => {
               set("password", e.target.value);
@@ -156,18 +158,18 @@ export default function Cadastro() {
           />
 
           <PrimaryButton type="submit" disabled={loading}>
-            {loading ? "Cadastrando..." : "Cadastrar Empresa"}
+            {loading ? t("creating") : t("create")}
           </PrimaryButton>
         </form>
 
         <div className={styles.footer}>
           <p className="text-small">
-            Já tem conta?{" "}
+            {t("haveAccount")}
             <span
               className={styles.link}
               onClick={() => router.push(routes.login)}
             >
-              Faça login
+              {t("login")}
             </span>
           </p>
         </div>

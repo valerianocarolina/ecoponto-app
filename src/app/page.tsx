@@ -6,30 +6,32 @@ import { User, Building2 } from "lucide-react";
 import { Button } from "@/components/ButtonWithIcon/ButtonWithIcon";
 import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { routes } from "@/routes/routes";
+import { useTranslations } from "next-intl";
 
 export default function Home() {
   const router = useRouter();
+  const t = useTranslations("Home");
 
   return (
     <main className={styles.screen}>
       <div className={styles.container}>
         <AppIcon />
 
-        <h1>EcoPonto</h1>
+        <h1>{t("title")}</h1>
         <p className="text-small">
-          Encontre pontos de coleta ou gerencie seus pontos
+          {t("description")}
         </p>
 
         <Button
-          title="Sou Cliente"
-          description="Encontre pontos de coleta próximos a você"
+          title={t("clienteTitle")}
+          description={t("clienteDescription")}
           icon={<User />}
           onClick={() => router.push(routes.loginCliente)}
         />
 
         <Button
-          title="Sou Empresa"
-          description="Gerencie seus pontos de reciclagem"
+          title={t("empresaTitle")}
+          description={t("empresaDescription")}
           icon={<Building2 />}
           onClick={() => router.push(routes.login)}
         />

@@ -53,6 +53,12 @@
   background: hsl(var(--destructive) / 0.1);
 }
 
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .iconOnly {
   width: 32px;
   height: 32px;

@@ -1,8 +1,8 @@
 "use client";
 
 import styles from "./styles.module.css";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Loader2,
@@ -12,10 +12,11 @@ import {
 } from "lucide-react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute/ProtectedRoute";
-import { createPoint } from "@/services/points";
+import { createPoint, getPoint, updatePoint } from "@/services/points";
 import { MATERIAL_LABELS, MaterialType } from "@/util/materials";
 import {
   emptySchedule,
+  parseHoursToSchedule,
   scheduleToString,
   type Schedule,
 } from "@/lib/schedule";
@@ -24,6 +25,8 @@ import { ImageCapture } from "@/components/ImageCapture/ImageCapture";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { TextField } from "@/components/TextField/TextField";
 import { routes } from "@/routes/routes";
+import { formatSchedule } from "@/util/formatSchedule";
+import { useTranslations } from "next-intl";
 
 const ALL: MaterialType[] = [
   "plastico",
@@ -37,9 +40,15 @@ const ALL: MaterialType[] = [
 export default function CadastrarPonto() {
   const link = "https://buscacepinter.correios.com.br/";
   const router = useRouter();
+  const t = useTranslations("CadastraPonto");
 
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [pointLoading, setPointLoading] = useState(false);
+
+  const searchParams = useSearchParams();
+  const pointId = searchParams.get("id");
+  const editing = Boolean(pointId);
 
   const [imageUrl, setImageUrl] = useState("");
 
@@ -94,6 +103,39 @@ export default function CadastrarPonto() {
     );
   }
 
+  useEffect(() => {
+    if (!pointId) return;
+
+    async function loadPoint() {
+      setPointLoading(true);
+
+      try {
+        const point = await getPoint(pointId || "");
+
+        setForm({
+          nome: point.nome || "",
+          cep: point.cep || "",
+          logradouro: point.logradouro || "",
+          numero: point.numero || "",
+          bairro: point.bairro || "",
+          cidade: point.cidade || "",
+          uf: point.uf || "",
+        });
+
+        setSchedule(parseHoursToSchedule(point.horario || ""));
+        setMaterials(point.tags || []);
+        setImageUrl(point.imagem || "");
+      } catch (err) {
+        console.error(err);
+        alert(t("fetchData"));
+      } finally {
+        setPointLoading(false);
+      }
+    }
+
+    loadPoint();
+  }, [pointId]);
+
   async function geocode(address: string) {
     try {
       const res = await fetch(
@@ -127,30 +169,40 @@ export default function CadastrarPonto() {
       !form.uf ||
       materials.length === 0
     ) {
-      alert("Preencha os campos obrigatórios");
+      alert(t("incompleteData"));
       return;
     }
 
     setLoading(true);
 
-    const endereco = `${form.logradouro}, ${form.numero} - ${form.bairro}, ${form.cidade} - ${form.uf}`;
+    try {
+      const endereco = `${form.logradouro}, ${form.numero} - ${form.bairro}, ${form.cidade} - ${form.uf}`;
+      const payload = {
+        nome: form.nome,
+        cep: form.cep,
+        logradouro: form.logradouro,
+        numero: form?.numero || "S/N",
+        bairro: form.bairro,
+        cidade: form.cidade,
+        uf: form.uf,
+        endereco,
+        tags: materials,
+        imagem: imageUrl || "",
+        horario: scheduleToString(schedule),
+      };
 
-    const coords = await geocode(endereco);
+      if (editing && pointId) {
+        await updatePoint(pointId, payload);
+      } else {
+        await createPoint(payload);
+      }
 
-    const horario = scheduleToString(schedule);
-
-    await createPoint({
-      nome: form.nome,
-      endereco,
-      horario,
-      tags: materials,
-      imagem: imageUrl,
-      lat: coords?.lat,
-      lng: coords?.lng,
-    });
-
-    setLoading(false);
-    router.push(routes.meusPontos);
+      router.push(routes.meusPontos);
+    } catch (err) {
+      alert(editing ? t("updateData") : t("createData"));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -164,17 +216,22 @@ export default function CadastrarPonto() {
           <div className={styles.headerInfo}>
             <MapPin className={styles.headerIcon} />
             <h1 className={styles.headerTitle}>
-              Novo Ponto de Coleta
+              {editing ? t("editPoint") : t("createPoint")}
             </h1>
           </div>
         </header>
 
         <div className={styles.content}>
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <TextField label="Nome do ponto*" value={form.nome} placeholder="EcoPonto Centro" onChange={(e) => setField("nome", e.target.value)}/>
+          {pointLoading ? (
+            <div className={styles.loading}>
+              <Loader2 />
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <TextField label={t("name")} value={form.nome} placeholder={t("namePlaceholder")} onChange={(e) => setField("nome", e.target.value)}/>
 
             <div className={styles.cepWrap}>
-              <TextField label="CEP *" value={form.cep} placeholder="00000-000" onChange={(e) => handleCep(e.target.value)}/>
+              <TextField label={t("cep")} value={form.cep} placeholder={t("cepPlaceholder")} onChange={(e) => handleCep(e.target.value)}/>
               {cepLoading && <Loader2 className={styles.cepSpinner} />}
             <span
               onClick={() => window.open(link, "_blank")}
@@ -184,25 +241,25 @@ export default function CadastrarPonto() {
             </span>
             </div>
 
-            <TextField label="Logradouro *" value={form.logradouro} placeholder="Rua, Avenida..." onChange={(e) => setField("logradouro", e.target.value)}/>
+            <TextField label={t("logradouro")} value={form.logradouro} placeholder={t("logradouroPlaceholder")} onChange={(e) => setField("logradouro", e.target.value)}/>
 
             <div className={styles.row}>
-              <TextField label="Número" style={{ width: '156px'}} value={form.numero} placeholder="123" onChange={(e) => setField("numero", e.target.value)}/>
-              <TextField label="Bairro *" style={{ width: '312px'}} value={form.bairro} placeholder="Centro" onChange={(e) => setField("bairro", e.target.value)} />
+              <TextField label={t("number")} style={{ width: '156px'}} value={form.numero} placeholder={t("numberPlaceholder")} onChange={(e) => setField("numero", e.target.value)}/>
+              <TextField label={t("bairro")} style={{ width: '312px'}} value={form.bairro} placeholder={t("bairroPlaceholder")} onChange={(e) => setField("bairro", e.target.value)} />
             </div>
             <div className={styles.row}>
-              <TextField label="Cidade *" style={{ width: '312px'}} value={form.cidade} placeholder="São Paulo" onChange={(e) => setField("cidade", e.target.value)}/>
-              <TextField label="UF *" style={{ width: '156px'}} value={form.uf} placeholder="SP" onChange={(e) => setField("uf", e.target.value)}/>
+              <TextField label={t("city")} style={{ width: '312px'}} value={form.cidade} placeholder={t("cityPlaceholder")} onChange={(e) => setField("cidade", e.target.value)}/>
+              <TextField label={t("state")} style={{ width: '156px'}} value={form.uf} placeholder={t("statePlaceholder")} onChange={(e) => setField("uf", e.target.value)}/>
             </div>
 
             <div>
-              <label className={styles.label}>Horário de funcionamento *</label>
+              <label className={styles.label}>{t("hour")}</label>
               <HoursSchedule schedule={schedule} onChange={setSchedule} />
             </div>
 
             <div>
 
-            <label className={styles.label}>Materiais aceitos *</label>
+            <label className={styles.label}>{t("aceptedMaterials")}</label>
             <div className={styles.materialsGrid}>
               {ALL.map((m) => (
                 <button
@@ -225,9 +282,10 @@ export default function CadastrarPonto() {
             <ImageCapture onImageUrl={setImageUrl} />
 
             <PrimaryButton type="submit" disabled={loading}>
-              {loading ? <Loader2 size={16} /> : "Cadastrar ponto"}
+              {loading ? <Loader2 size={16} /> : editing ? t("updatePoint") : t("savePoint")}
             </PrimaryButton>
           </form>
+          )}
         </div>
       </div>
     </ProtectedRoute>

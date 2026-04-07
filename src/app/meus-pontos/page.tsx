@@ -3,9 +3,9 @@
 import styles from "./styles.module.css";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, LogOut, MapPin, Plus, Recycle } from "lucide-react";
+import { Loader2, LogOut, MapPin, Plus, Recycle, Settings } from "lucide-react";
 
-import { PointCard } from "@/components/PointCard/PointCard";
+import { PointCardAdmin } from "@/components/PointCardAdmin/PointCardAdmin";
 import { ProtectedRoute } from "@/components/ProtectedRoute/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
@@ -36,7 +36,7 @@ export default function MeusPontos() {
 
   async function handleDelete(id: string) {
     await deletePoint(id);
-    setPoints((prev) => prev.filter((p) => p.id !== id));
+    setPoints((prev) => prev.filter((p) => p._id !== id));
   }
 
   return (
@@ -67,6 +67,12 @@ export default function MeusPontos() {
 
             <SmallButtonWithIcon
               variant="ghost"
+              icon={<Settings size={16} />}
+              onClick={() => router.push("/empresa/perfil")}
+            />
+
+            <SmallButtonWithIcon
+              variant="ghost"
               icon={<LogOut size={16} />}
               onClick={logout}
             />
@@ -89,18 +95,21 @@ export default function MeusPontos() {
             </div>
           ) : (
             <div className={styles.list}>
-              {points.map((p) => (
-                <PointCard
-                  key={p.id}
+              {points.map((p) => {
+                return (
+                <PointCardAdmin
+                  key={p._id}
                   name={p.nome}
                   address={p.endereco}
                   hours={p.horario}
                   materials={p.tags}
-                  image={p.imagem}
-                  onEdit={() => {}}
-                  onDelete={() => handleDelete(p.id)}
+                  image={p.imagem || "/default-point.jpg"}
+                  onEdit={() => router.push(`${routes.cadastraPontos}?id=${p._id}`)}
+                  onDelete={() => handleDelete(p._id)}
                 />
-              ))}
+                )
+              }
+              )}
             </div>
           )}
         </div>

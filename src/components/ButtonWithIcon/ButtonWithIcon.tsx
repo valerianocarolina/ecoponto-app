@@ -2,7 +2,7 @@ import { Button as AntButton } from "antd";
 import styles from "./styles.module.css";
 
 type Props = {
-  type: "primary" | "secondary";
+  type?: "primary" | "secondary";
   title: string;
   description?: string;
   icon: React.ReactNode;
