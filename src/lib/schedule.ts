@@ -21,62 +21,61 @@ export function emptySchedule(): Schedule {
   return { seg: null, ter: null, qua: null, qui: null, sex: null, sab: null, dom: null };
 }
 
-export function scheduleToString(schedule: Schedule): string {
-  const activeDays = DAYS.filter((d) => schedule[d.key] !== null);
-  if (activeDays.length === 0) return "Consultar";
+export function parseScheduleInput(value: any): Schedule {
+  if (!value) return emptySchedule();
+  if (typeof value !== "object") return emptySchedule();
 
-  const groups: { days: typeof DAYS[number][]; open: string; close: string }[] = [];
-
-  for (const day of activeDays) {
-    const s = schedule[day.key]!;
-    const last = groups[groups.length - 1];
-    if (last && last.open === s.open && last.close === s.close) {
-      last.days.push(day);
-    } else {
-      groups.push({ days: [day], open: s.open, close: s.close });
-    }
-  }
-
-  return groups
-    .map((g) => {
-      const dayStr = g.days.length === 1
-        ? g.days[0].label
-        : `${g.days[0].label}-${g.days[g.days.length - 1].label}`;
-      return `${dayStr}: ${parseInt(g.open)}h-${parseInt(g.close)}h`;
-    })
-    .join(" | ");
-}
-
-export function parseHoursToSchedule(hours: string): Schedule {
   const schedule = emptySchedule();
-  if (!hours || hours === "Consultar") return schedule;
 
-  const dayMap: Record<string, DayKey> = {
-    seg: "seg", ter: "ter", qua: "qua", qui: "qui", sex: "sex", "sáb": "sab", sab: "sab", dom: "dom",
-  };
+  Object.entries(value as Record<string, any>).forEach(([day, item]) => {
+    if (!item || typeof item !== "object") return;
+    const key = day as DayKey;
+    if (!DAYS.some((d) => d.key === key)) return;
 
-  const parts = hours.split("|").map((s) => s.trim());
-  for (const part of parts) {
-    const match = part.match(/^(.+?):\s*(\d+)h\s*-\s*(\d+)h$/i);
-    if (!match) continue;
-    const [, dayRange, open, close] = match;
-    const rangeParts = dayRange.trim().split("-").map((s) => s.trim().toLowerCase());
-
-    if (rangeParts.length === 2) {
-      const startIdx = DAYS.findIndex((d) => dayMap[rangeParts[0]] === d.key);
-      const endIdx = DAYS.findIndex((d) => dayMap[rangeParts[1]] === d.key);
-      if (startIdx >= 0 && endIdx >= 0) {
-        for (let i = startIdx; i <= endIdx; i++) {
-          schedule[DAYS[i].key] = { open: open.padStart(2, "0"), close: close.padStart(2, "0") };
-        }
-      }
-    } else {
-      const key = dayMap[rangeParts[0]];
-      if (key) schedule[key] = { open: open.padStart(2, "0"), close: close.padStart(2, "0") };
+    if (item.open !== undefined && item.close !== undefined) {
+      schedule[key] = {
+        open: String(item.open).padStart(2, "0"),
+        close: String(item.close).padStart(2, "0"),
+      };
+      return;
     }
-  }
+
+    if (item.inicio !== undefined && item.fim !== undefined) {
+      const openStr = String(item.inicio).split(":")[0];
+      const closeStr = String(item.fim).split(":")[0];
+      schedule[key] = {
+        open: openStr.padStart(2, "0"),
+        close: closeStr.padStart(2, "0"),
+      };
+      return;
+    }
+
+    if (item.aberto === false) {
+      schedule[key] = null;
+    }
+  });
 
   return schedule;
+}
+
+export function scheduleToApiHorario(schedule: Schedule) {
+  const result: Record<DayKey, { aberto: boolean; inicio?: string; fim?: string }> = {} as any;
+
+  DAYS.forEach(({ key }) => {
+    const entry = schedule[key];
+    if (!entry) {
+      result[key] = { aberto: false };
+      return;
+    }
+
+    result[key] = {
+      aberto: true,
+      inicio: `${entry.open.padStart(2, "0")}:00`,
+      fim: `${entry.close.padStart(2, "0")}:00`,
+    };
+  });
+
+  return result;
 }
 
 export { DAYS };

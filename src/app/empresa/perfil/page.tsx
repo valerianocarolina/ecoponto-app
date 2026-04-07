@@ -15,7 +15,7 @@ import { getEmpresa, updateEmpresa, deleteEmpresa } from "@/services/empresa";
 
 export default function EmpresaPerfil() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, updateUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,11 +48,21 @@ export default function EmpresaPerfil() {
   async function handleSave() {
     setSaving(true);
     try {
-      await updateEmpresa({
+      const response = await updateEmpresa({
         nome: name,
         telefone: phone,
         email: email,
       });
+
+      const updatedCompany = response?.cooperativa || response;
+      if (updatedCompany) {
+        updateUser({
+          nome: updatedCompany.nome || name,
+          email: updatedCompany.email || email,
+          telefone: updatedCompany.telefone || phone,
+        });
+      }
+
       setShowSaveConfirm(false);
     } catch (error) {
       console.error("Erro ao salvar:", error);

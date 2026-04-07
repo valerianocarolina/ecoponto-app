@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 type User = {
   nome?: string;
+  email?: string;
+  telefone?: string;
 };
 
 type Tipo = "user" | "cooperative" | null;
@@ -12,9 +14,10 @@ type AuthContextType = {
   user: User | null;
   token: string | null;
   tipo: Tipo;
-  loading: boolean; // 🔥 NOVO
+  loading: boolean;
   login: (data: any, tipo: Tipo) => void;
   logout: () => void;
+  updateUser: (user: User) => void;
 };
 
 const AuthContext = createContext<AuthContextType>({} as any);
@@ -63,6 +66,29 @@ export function AuthProvider({ children }: any) {
     setTipo(tipo);
   };
 
+  const updateUser = (userData: User) => {
+    setUser(userData);
+
+    const stored = localStorage.getItem("auth");
+    if (!stored) return;
+
+    try {
+      const payload = JSON.parse(stored);
+      localStorage.setItem(
+        "auth",
+        JSON.stringify({
+          ...payload,
+          user: {
+            ...payload.user,
+            ...userData,
+          },
+        })
+      );
+    } catch {
+      // ignore invalid auth payload
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("auth");
     setUser(null);
@@ -72,7 +98,7 @@ export function AuthProvider({ children }: any) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, tipo, login, logout, loading }}
+      value={{ user, token, tipo, login, logout, loading, updateUser }}
     >
       {children}
     </AuthContext.Provider>

@@ -12,12 +12,13 @@ import {
 } from "lucide-react";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute/ProtectedRoute";
+import { ConfirmDialog } from "@/components/ConfirmDialog/ConfirmDialog";
 import { createPoint, getPoint, updatePoint } from "@/services/points";
 import { MATERIAL_LABELS, MaterialType } from "@/util/materials";
 import {
   emptySchedule,
-  parseHoursToSchedule,
-  scheduleToString,
+  parseScheduleInput,
+  scheduleToApiHorario,
   type Schedule,
 } from "@/lib/schedule";
 import { HoursSchedule } from "@/components/HoursScredule/HoursScredule";
@@ -25,7 +26,6 @@ import { ImageCapture } from "@/components/ImageCapture/ImageCapture";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { TextField } from "@/components/TextField/TextField";
 import { routes } from "@/routes/routes";
-import { formatSchedule } from "@/util/formatSchedule";
 import { useTranslations } from "next-intl";
 
 const ALL: MaterialType[] = [
@@ -45,6 +45,7 @@ export default function CadastrarPonto() {
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [pointLoading, setPointLoading] = useState(false);
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const pointId = searchParams.get("id");
@@ -64,6 +65,7 @@ export default function CadastrarPonto() {
 
   const [schedule, setSchedule] = useState<Schedule>(emptySchedule());
   const [materials, setMaterials] = useState<MaterialType[]>([]);
+
 
   function setField(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -122,7 +124,7 @@ export default function CadastrarPonto() {
           uf: point.uf || "",
         });
 
-        setSchedule(parseHoursToSchedule(point.horario || ""));
+        setSchedule(parseScheduleInput(point.horario || ""));
         setMaterials(point.tags || []);
         setImageUrl(point.imagem || "");
       } catch (err) {
@@ -173,6 +175,10 @@ export default function CadastrarPonto() {
       return;
     }
 
+    setSaveConfirmOpen(true);
+  }
+
+  async function handleConfirmSave() {
     setLoading(true);
 
     try {
@@ -188,7 +194,7 @@ export default function CadastrarPonto() {
         endereco,
         tags: materials,
         imagem: imageUrl || "",
-        horario: scheduleToString(schedule),
+        horario: scheduleToApiHorario(schedule),
       };
 
       if (editing && pointId) {
@@ -200,6 +206,7 @@ export default function CadastrarPonto() {
       router.push(routes.meusPontos);
     } catch (err) {
       alert(editing ? t("updateData") : t("createData"));
+      setSaveConfirmOpen(false);
     } finally {
       setLoading(false);
     }
@@ -288,6 +295,15 @@ export default function CadastrarPonto() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={saveConfirmOpen}
+        title={editing ? "Salvar alterações" : "Criar ponto de coleta"}
+        description={editing ? "Tem certeza que deseja salvar as alterações neste ponto?" : "Tem certeza que deseja criar este ponto de coleta?"}
+        onConfirm={handleConfirmSave}
+        onCancel={() => setSaveConfirmOpen(false)}
+        loading={loading}
+      />
     </ProtectedRoute>
   );
 }

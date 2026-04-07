@@ -2,7 +2,7 @@
 
 import styles from "./styles.module.css";
 import { MapPin, Clock, Pencil, Trash2 } from "lucide-react";
-import { MaterialType, MATERIAL_LABELS } from "@/util/materials";
+import { MaterialType, MATERIAL_LABELS, MATERIAL_COLORS } from "@/util/materials";
 import { SmallButtonWithIcon } from "../SmallButtonWithIcon/SmallButtonWithIcon";
 
 type Props = {
@@ -67,7 +67,7 @@ export function PointCardAdmin({
           {materials.map((m) => (
             <span
               key={m}
-              className={`${styles.materialBadge}`}
+              className={`${styles.materialBadge} ${styles[MATERIAL_COLORS[m]]}`}
             >
               {MATERIAL_LABELS[m]}
             </span>

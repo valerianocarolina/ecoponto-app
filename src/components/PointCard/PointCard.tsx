@@ -2,6 +2,7 @@
 
 import { MapPin, Clock, Navigation, Heart } from "lucide-react";
 import type { CollectionPoint } from "@/data/collectionPoints";
+import { formatHours } from "@/util/formatHours";
 import { MaterialBadge } from "../MaterialBadge/MaterialBadge";
 import { toast } from "sonner";
 import s from "./PointCard.module.css";
@@ -28,7 +29,7 @@ export function PointCard({
   const materials = point.materials || point.tags || [];
   const name = point.name || point.nome || "Ponto sem nome";
   const address = point.address || point.endereco || "";
-  const hours = point.hours || point.horario || "";
+  const hours = formatHours(point.hours || point.horario || "");
   const imageUrl = point.imageUrl || point.imagem;
 
   return (

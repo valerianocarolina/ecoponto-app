@@ -7,9 +7,11 @@ import { Loader2, LogOut, MapPin, Plus, Recycle, Settings } from "lucide-react";
 
 import { PointCardAdmin } from "@/components/PointCardAdmin/PointCardAdmin";
 import { ProtectedRoute } from "@/components/ProtectedRoute/ProtectedRoute";
+import { ConfirmDialog } from "@/components/ConfirmDialog/ConfirmDialog";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
 import { getPoints, deletePoint } from "@/services/points";
+import { formatHours } from "@/util/formatHours";
 import { SmallButtonWithIcon } from "@/components/SmallButtonWithIcon/SmallButtonWithIcon";
 
 export default function MeusPontos() {
@@ -18,11 +20,15 @@ export default function MeusPontos() {
 
   const [points, setPoints] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
         const data = await getPoints();
+        console.log(data);
         setPoints(data);
       } catch (e) {
         console.error(e);
@@ -34,9 +40,22 @@ export default function MeusPontos() {
     load();
   }, []);
 
-  async function handleDelete(id: string) {
-    await deletePoint(id);
-    setPoints((prev) => prev.filter((p) => p._id !== id));
+  function handleDeleteClick(id: string) {
+    setDeleteConfirmId(id);
+    setDeleteConfirmOpen(true);
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteConfirmId) return;
+    setDeleteLoading(true);
+    try {
+      await deletePoint(deleteConfirmId);
+      setPoints((prev) => prev.filter((p) => p._id !== deleteConfirmId));
+      setDeleteConfirmOpen(false);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteConfirmId(null);
+    }
   }
 
   return (
@@ -101,11 +120,11 @@ export default function MeusPontos() {
                   key={p._id}
                   name={p.nome}
                   address={p.endereco}
-                  hours={p.horario}
+                  hours={formatHours(p.horario)}
                   materials={p.tags}
                   image={p.imagem || "/default-point.jpg"}
                   onEdit={() => router.push(`${routes.cadastraPontos}?id=${p._id}`)}
-                  onDelete={() => handleDelete(p._id)}
+                  onDelete={() => handleDeleteClick(p._id)}
                 />
                 )
               }
@@ -114,6 +133,19 @@ export default function MeusPontos() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="Deletar ponto de coleta"
+        description="Tem certeza que deseja deletar este ponto? Esta ação não pode ser desfeita."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteConfirmId(null);
+        }}
+        loading={deleteLoading}
+        variant="destructive"
+      />
     </ProtectedRoute>
   );
 }

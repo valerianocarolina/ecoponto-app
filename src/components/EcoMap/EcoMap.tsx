@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CollectionPoint, MATERIAL_LABELS_DATA } from "@/data/collectionPoints";
+import { formatHours } from "@/util/formatHours";
 import styles from "./EcoMap.module.css";
 import "leaflet/dist/leaflet.css";
 
@@ -122,7 +123,7 @@ export function EcoMap({
       const materialsText = materials
         .map((m) => MATERIAL_LABELS_DATA[m])
         .join(", ");
-      const popup = `<div style="min-width: 180px"><strong>${p.name || p.nome}</strong><br/><span style="font-size: 12px">${p.address || p.endereco}</span><br/><span style="font-size: 12px">${p.hours || p.horario}</span><br/><span style="font-size: 12px; font-weight: 500">${materialsText}</span></div>`;
+      const popup = `<div style="min-width: 180px"><strong>${p.name || p.nome}</strong><br/><span style="font-size: 12px">${p.address || p.endereco}</span><br/><span style="font-size: 12px">${formatHours(p.hours || p.horario)}</span><br/><span style="font-size: 12px; font-weight: 500">${materialsText}</span></div>`;
 
       L.marker([p.lat, p.lng]).bindPopup(popup).addTo(markersRef.current!);
     });
