@@ -76,7 +76,7 @@ function LoginContent() {
           className={styles.backButton}
           onClick={() => router.push(routes.home)}
         >
-          <ArrowLeft size={16} /> Voltar
+          <ArrowLeft size={16} /> 
         </div>
 
         <div className={styles.header}>
