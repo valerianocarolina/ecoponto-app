@@ -26,7 +26,6 @@ import { ImageCapture } from "@/components/ImageCapture/ImageCapture";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { TextField } from "@/components/TextField/TextField";
 import { routes } from "@/routes/routes";
-import { useTranslations } from "next-intl";
 
 const ALL: MaterialType[] = [
   "plastico",
@@ -40,7 +39,6 @@ const ALL: MaterialType[] = [
 export default function CadastrarPonto() {
   const link = "https://buscacepinter.correios.com.br/";
   const router = useRouter();
-  const t = useTranslations("CadastraPonto");
 
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
@@ -129,7 +127,7 @@ export default function CadastrarPonto() {
         setImageUrl(point.imagem || "");
       } catch (err) {
         console.error(err);
-        alert(t("fetchData"));
+        alert("Erro ao carregar dados do ponto para edicao");
       } finally {
         setPointLoading(false);
       }
@@ -171,7 +169,7 @@ export default function CadastrarPonto() {
       !form.uf ||
       materials.length === 0
     ) {
-      alert(t("incompleteData"));
+      alert("Preencha os campos obrigatorios");
       return;
     }
 
@@ -205,7 +203,7 @@ export default function CadastrarPonto() {
 
       router.push(routes.meusPontos);
     } catch (err) {
-      alert(editing ? t("updateData") : t("createData"));
+      alert(editing ? "Erro ao atualizar ponto" : "Erro ao cadastrar ponto");
       setSaveConfirmOpen(false);
     } finally {
       setLoading(false);
@@ -223,7 +221,7 @@ export default function CadastrarPonto() {
           <div className={styles.headerInfo}>
             <MapPin className={styles.headerIcon} />
             <h1 className={styles.headerTitle}>
-              {editing ? t("editPoint") : t("createPoint")}
+              {editing ? "Editar Ponto" : "Novo Ponto de Coleta"}
             </h1>
           </div>
         </header>
@@ -235,10 +233,10 @@ export default function CadastrarPonto() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className={styles.form}>
-              <TextField label={t("name")} value={form.nome} placeholder={t("namePlaceholder")} onChange={(e) => setField("nome", e.target.value)}/>
+              <TextField label="Nome do ponto" value={form.nome} placeholder="EcoPonto Centro" onChange={(e) => setField("nome", e.target.value)}/>
 
             <div className={styles.cepWrap}>
-              <TextField label={t("cep")} value={form.cep} placeholder={t("cepPlaceholder")} onChange={(e) => handleCep(e.target.value)}/>
+              <TextField label="CEP" value={form.cep} placeholder="00000-000" onChange={(e) => handleCep(e.target.value)}/>
               {cepLoading && <Loader2 className={styles.cepSpinner} />}
             <span
               onClick={() => window.open(link, "_blank")}
@@ -248,25 +246,25 @@ export default function CadastrarPonto() {
             </span>
             </div>
 
-            <TextField label={t("logradouro")} value={form.logradouro} placeholder={t("logradouroPlaceholder")} onChange={(e) => setField("logradouro", e.target.value)}/>
+            <TextField label="Logradouro" value={form.logradouro} placeholder="Rua, Avenida..." onChange={(e) => setField("logradouro", e.target.value)}/>
 
             <div className={styles.row}>
-              <TextField label={t("number")} style={{ width: '156px'}} value={form.numero} placeholder={t("numberPlaceholder")} onChange={(e) => setField("numero", e.target.value)}/>
-              <TextField label={t("bairro")} style={{ width: '312px'}} value={form.bairro} placeholder={t("bairroPlaceholder")} onChange={(e) => setField("bairro", e.target.value)} />
+              <TextField label="Numero" style={{ width: '156px'}} value={form.numero} placeholder="123" onChange={(e) => setField("numero", e.target.value)}/>
+              <TextField label="Bairro" style={{ width: '312px'}} value={form.bairro} placeholder="Centro" onChange={(e) => setField("bairro", e.target.value)} />
             </div>
             <div className={styles.row}>
-              <TextField label={t("city")} style={{ width: '312px'}} value={form.cidade} placeholder={t("cityPlaceholder")} onChange={(e) => setField("cidade", e.target.value)}/>
-              <TextField label={t("state")} style={{ width: '156px'}} value={form.uf} placeholder={t("statePlaceholder")} onChange={(e) => setField("uf", e.target.value)}/>
+              <TextField label="Cidade" style={{ width: '312px'}} value={form.cidade} placeholder="Sao Paulo" onChange={(e) => setField("cidade", e.target.value)}/>
+              <TextField label="UF" style={{ width: '156px'}} value={form.uf} placeholder="SP" onChange={(e) => setField("uf", e.target.value)}/>
             </div>
 
             <div>
-              <label className={styles.label}>{t("hour")}</label>
+              <label className={styles.label}>Horario de funcionamento</label>
               <HoursSchedule schedule={schedule} onChange={setSchedule} />
             </div>
 
             <div>
 
-            <label className={styles.label}>{t("aceptedMaterials")}</label>
+            <label className={styles.label}>Materiais aceitos</label>
             <div className={styles.materialsGrid}>
               {ALL.map((m) => (
                 <button
@@ -289,7 +287,7 @@ export default function CadastrarPonto() {
             <ImageCapture onImageUrl={setImageUrl} />
 
             <PrimaryButton type="submit" disabled={loading}>
-              {loading ? <Loader2 size={16} /> : editing ? t("updatePoint") : t("savePoint")}
+              {loading ? <Loader2 size={16} /> : editing ? "Atualizar ponto" : "Cadastrar ponto"}
             </PrimaryButton>
           </form>
           )}

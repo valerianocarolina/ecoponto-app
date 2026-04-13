@@ -3,7 +3,7 @@
 import styles from "./styles.module.css";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Fingerprint } from "lucide-react";
 
 import { PageHeader } from "@/components/PageHeader/PageHeader";
 import { ConfirmDialog } from "@/components/ConfirmDialog/ConfirmDialog";
@@ -12,10 +12,13 @@ import { SmallButtonWithIcon } from "@/components/SmallButtonWithIcon/SmallButto
 import { ProtectedRoute } from "@/components/ProtectedRoute/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { getEmpresa, updateEmpresa, deleteEmpresa } from "@/services/empresa";
+import { useBiometricAuth } from "@/hooks/useBiometricAuth";
+import { toast } from "sonner";
 
 export default function EmpresaPerfil() {
   const router = useRouter();
   const { logout, updateUser } = useAuth();
+  const { supported: bioSupported, enrolled: bioEnrolled, enroll: bioEnroll, unenroll: bioUnenroll } = useBiometricAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -75,6 +78,7 @@ export default function EmpresaPerfil() {
     setDeleting(true);
     try {
       await deleteEmpresa();
+      bioUnenroll();
       logout();
       router.push("/");
     } catch (error) {
@@ -82,6 +86,17 @@ export default function EmpresaPerfil() {
       setDeleting(false);
     }
   }
+
+  const toggleBiometric = async () => {
+    if (bioEnrolled) {
+      bioUnenroll();
+      toast.success("Biometria desativada.");
+    } else {
+      const ok = await bioEnroll();
+      if (ok) toast.success("Biometria ativada!");
+      else toast.error("Seu dispositivo não suporta biometria.");
+    }
+  };
 
   if (loading) {
     return (
@@ -143,6 +158,17 @@ export default function EmpresaPerfil() {
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : "Salvar alterações"}
               </SmallButtonWithIcon>
+
+              {bioSupported && (
+                <SmallButtonWithIcon
+                  fullWidth
+                  variant="outline"
+                  onClick={toggleBiometric}
+                >
+                  <Fingerprint size={16} />
+                  {bioEnrolled ? "Desativar Biometria" : "Ativar Login Biométrico"}
+                </SmallButtonWithIcon>
+              )}
             </div>
           </section>
 

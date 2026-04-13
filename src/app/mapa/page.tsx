@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   UserCircle,
   Bell,
+  BellOff,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
@@ -18,11 +19,13 @@ import {
   transformApiPoint,
 } from "@/data/collectionPoints";
 import { MaterialType } from "@/util/materials";
-import { useGeolocation } from "@/hooks/useGeolocation";
-import { getAllCollectionPoints } from "@/services/points";
-import { EcoMap } from "@/components/EcoMap/EcoMap";
+import { routes } from "@/routes/routes";
+import { useAuth } from "@/context/AuthContext";
 import { PointCard } from "@/components/PointCard/PointCard";
+import { EcoMap } from "@/components/EcoMap/EcoMap";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import styles from "./styles.module.css";
+import { getAllCollectionPoints } from "@/services/points";
 
 function calculateDistance(
   lat1: number,
@@ -55,7 +58,7 @@ const ALL: MaterialType[] = [
 export default function MapPage() {
   const router = useRouter();
   const geo = useGeolocation();
-  const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { user } = useAuth();
 
   const [points, setPoints] = useState<CollectionPoint[]>([]);
   const [filters, setFilters] = useState<MaterialType[]>([]);
@@ -65,28 +68,82 @@ export default function MapPage() {
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission>("default");
   const [isLoadingPoints, setIsLoadingPoints] = useState(true);
-  const [simulatedPosition, setSimulatedPosition] = useState<[number, number] | null>(null);
   const [locationToastShown, setLocationToastShown] = useState(false);
+  const knownPointIdsRef = useRef<Set<string>>(new Set());
+
+  const userLocation = geo.position;
 
   useEffect(() => {
-    async function loadPoints() {
+    let active = true;
+
+    const loadPoints = async (notifyNew: boolean) => {
       try {
-        setIsLoadingPoints(true);
-        const apiPoints = await getAllCollectionPoints();
-
-        if (apiPoints && apiPoints.length > 0) {
-          const transformed = apiPoints.map(transformApiPoint);
-          setPoints(transformed);
+        if (notifyNew === false) {
+          setIsLoadingPoints(true);
         }
-      } catch (error) {
-        toast.error("Usando dados offline");
-      } finally {
-        setIsLoadingPoints(false);
-      }
-    }
 
-    loadPoints();
-  }, []);
+        const apiPoints = await getAllCollectionPoints();
+        const transformed: CollectionPoint[] = (apiPoints || []).map(transformApiPoint);
+
+        if (!active) return;
+
+        setPoints(transformed);
+
+        const currentIds = transformed
+          .map((point) => String(point._id || point.id || ""))
+          .filter(Boolean);
+
+        if (knownPointIdsRef.current.size === 0) {
+          knownPointIdsRef.current = new Set(currentIds);
+          return;
+        }
+
+        const newPoints = transformed.filter(
+          (point) => !knownPointIdsRef.current.has(String(point._id || point.id || ""))
+        );
+
+        if (
+          notifyNew &&
+          newPoints.length > 0 &&
+          notificationPermission === "granted"
+        ) {
+          const firstPointName = newPoints[0].name || newPoints[0].nome || "Novo ponto";
+          new Notification("Novo ponto de coleta cadastrado", {
+            body:
+              newPoints.length === 1
+                ? `${firstPointName} acabou de ser adicionado.`
+                : `${newPoints.length} novos pontos foram adicionados.`,
+            icon:
+              "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+          });
+
+          toast.success(
+            newPoints.length === 1
+              ? `Novo ponto cadastrado: ${firstPointName}`
+              : `${newPoints.length} novos pontos cadastrados`
+          );
+        }
+
+        knownPointIdsRef.current = new Set(currentIds);
+      } catch (error) {
+        if (!notifyNew) {
+          toast.error("Usando dados offline");
+        }
+      } finally {
+        if (active && !notifyNew) {
+          setIsLoadingPoints(false);
+        }
+      }
+    };
+
+    loadPoints(false);
+    const interval = window.setInterval(() => loadPoints(true), 30000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [notificationPermission]);
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -118,47 +175,6 @@ export default function MapPage() {
     }
   }, [geo.position, geo.loading, locationToastShown]);
 
-  useEffect(() => {
-    if (!routeDestination || !geo.position) {
-      setSimulatedPosition(null);
-      if (simulationIntervalRef.current) {
-        clearInterval(simulationIntervalRef.current);
-      }
-      return;
-    }
-
-    const startLat = geo.position[0];
-    const startLng = geo.position[1];
-    const endLat = routeDestination.lat;
-    const endLng = routeDestination.lng;
-
-    let step = 0;
-    const totalSteps = 50;
-
-    simulationIntervalRef.current = setInterval(() => {
-      step += 1;
-      const progress = step / totalSteps;
-
-      if (progress >= 1) {
-        setSimulatedPosition(null);
-        clearInterval(simulationIntervalRef.current!);
-        toast.success("🎉 Você chegou ao ponto de coleta!");
-        return;
-      }
-
-      const lat = startLat + (endLat - startLat) * progress;
-      const lng = startLng + (endLng - startLng) * progress;
-
-      setSimulatedPosition([lat, lng]);
-    }, 500);
-
-    return () => {
-      if (simulationIntervalRef.current) {
-        clearInterval(simulationIntervalRef.current);
-      }
-    };
-  }, [routeDestination, geo.position]);
-
   const filteredPoints = useMemo(() => {
     if (filters.length === 0) return points;
     return points.filter((p) => {
@@ -166,8 +182,6 @@ export default function MapPage() {
       return filters.some((f) => materials.includes(f));
     });
   }, [points, filters]);
-
-  const userLocation = simulatedPosition || geo.position;
 
   const sortedPoints = useMemo(() => {
     if (!userLocation) return filteredPoints;
@@ -230,22 +244,22 @@ export default function MapPage() {
         </div>
 
         <div className={styles.headerRight}>
-          {notificationPermission !== "granted" && (
+          <button
+            onClick={handleEnableNotifications}
+            className={styles.iconBtn}
+            title={notificationPermission === "granted" ? "Notificações ativadas" : "Ativar notificações"}
+          >
+            {notificationPermission === "granted" ? <Bell size={16} /> : <BellOff size={16} />}
+          </button>
+          {user && (
             <button
-              onClick={handleEnableNotifications}
+              onClick={() => router.push(routes.perfilCliente)}
               className={styles.iconBtn}
-              title="Ativar notificações"
+              title="Meu Perfil"
             >
-              <Bell size={16} />
+              <UserCircle size={16} />
             </button>
           )}
-          <button
-            onClick={() => router.push("/cliente/perfil")}
-            className={styles.iconBtn}
-            title="Meu Perfil"
-          >
-            <UserCircle size={16} />
-          </button>
           <button
             onClick={() => setPanelOpen(!panelOpen)}
             className={`${styles.iconBtn} ${styles.mobileOnly}`}

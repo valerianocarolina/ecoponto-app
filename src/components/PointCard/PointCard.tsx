@@ -3,7 +3,7 @@
 import { MapPin, Clock, Navigation, Heart } from "lucide-react";
 import type { CollectionPoint } from "@/data/collectionPoints";
 import { formatHours } from "@/util/formatHours";
-import { MaterialBadge } from "../MaterialBadge/MaterialBadge";
+import { MaterialType, MATERIAL_LABELS, MATERIAL_COLORS } from "@/util/materials";
 import { toast } from "sonner";
 import s from "./PointCard.module.css";
 
@@ -57,7 +57,13 @@ export function PointCard({
         )}
         <div className={s.badges}>
           {materials.map((m) => (
-            <MaterialBadge key={m} material={m} />
+            <span
+              key={m}
+              className={`${s.materialBadge} ${s[MATERIAL_COLORS[m as MaterialType]]}`}
+              title={MATERIAL_LABELS[m as MaterialType]}
+            >
+              {MATERIAL_LABELS[m as MaterialType]}
+            </span>
           ))}
         </div>
         <div className={s.actions}>

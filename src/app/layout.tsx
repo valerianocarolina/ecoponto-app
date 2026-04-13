@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 import "@/styles/global.css";
-import { NextIntlClientProvider } from "next-intl";
-import messages from "../../messages/pt-BR.json";
 
 const font = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -23,11 +21,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={font.className}>
-        <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </NextIntlClientProvider>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

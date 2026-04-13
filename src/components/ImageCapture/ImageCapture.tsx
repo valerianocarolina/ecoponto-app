@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, X } from "lucide-react";
 import styles from "./styles.module.css";
 import { Button } from "../ButtonWithIcon/ButtonWithIcon";
-import { useTranslations } from "next-intl";
 
 type Props = {
   onImageUrl: (url: string) => void;
@@ -14,7 +13,6 @@ type Props = {
 export function ImageCapture({ onImageUrl, initialUrl }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(initialUrl || null);
-  const t = useTranslations("ImageCapture");
 
   useEffect(() => {
     setPreview(initialUrl || null);
@@ -51,8 +49,8 @@ export function ImageCapture({ onImageUrl, initialUrl }: Props) {
         </div>
       ) : (
         <div className={styles.buttons}>
-            <Button type="secondary" title={t("cam")} icon={<Camera size={16} />} onClick={() => fileRef.current?.click()} />
-            <Button type="secondary" title={t("galeria")} icon={<ImagePlus size={16} />} onClick={() => fileRef.current?.click()} />
+            <Button type="secondary" title="Camera" icon={<Camera size={16} />} onClick={() => fileRef.current?.click()} />
+            <Button type="secondary" title="Galeria" icon={<ImagePlus size={16} />} onClick={() => fileRef.current?.click()} />
         </div>
       )}
 

@@ -14,6 +14,50 @@ interface EcoMapProps {
   onClearRoute?: () => void;
 }
 
+function distanceSquared(a: [number, number], b: [number, number]) {
+  const dLat = a[0] - b[0];
+  const dLng = a[1] - b[1];
+  return dLat * dLat + dLng * dLng;
+}
+
+function getClosestPointOnSegment(
+  point: [number, number],
+  start: [number, number],
+  end: [number, number]
+) {
+  const vx = end[0] - start[0];
+  const vy = end[1] - start[1];
+  const wx = point[0] - start[0];
+  const wy = point[1] - start[1];
+
+  const len2 = vx * vx + vy * vy;
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, (wx * vx + wy * vy) / len2));
+
+  return [start[0] + vx * t, start[1] + vy * t] as [number, number];
+}
+
+function getClosestRoutePoint(
+  coords: [number, number][],
+  position: [number, number]
+) {
+  let closestPoint = coords[0];
+  let closestIndex = 0;
+  let closestDistance = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < coords.length - 1; i += 1) {
+    const candidate = getClosestPointOnSegment(position, coords[i], coords[i + 1]);
+    const dist = distanceSquared(candidate, position);
+
+    if (dist < closestDistance) {
+      closestDistance = dist;
+      closestPoint = candidate;
+      closestIndex = i;
+    }
+  }
+
+  return { closestPoint, closestIndex };
+}
+
 export function EcoMap({
   points,
   userLocation,
@@ -25,9 +69,11 @@ export function EcoMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<any | null>(null);
   const userMarkerRef = useRef<any | null>(null);
-  const routeLayerRef = useRef<any | null>(null);
+  const completedRouteRef = useRef<any | null>(null);
+  const remainingRouteRef = useRef<any | null>(null);
   const initialFlyDone = useRef(false);
   const [isReady, setIsReady] = useState(false);
+  const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const defaultCenter: [number, number] = [-23.5615, -46.6559];
   const LRef = useRef<any>(null);
   const userIconRef = useRef<any>(null);
@@ -140,10 +186,16 @@ export function EcoMap({
   useEffect(() => {
     if (!mapRef.current || !LRef.current) return;
 
-    if (routeLayerRef.current) {
-      routeLayerRef.current.remove();
-      routeLayerRef.current = null;
+    if (completedRouteRef.current) {
+      completedRouteRef.current.remove();
+      completedRouteRef.current = null;
     }
+    if (remainingRouteRef.current) {
+      remainingRouteRef.current.remove();
+      remainingRouteRef.current = null;
+    }
+
+    setRouteCoords([]);
 
     if (!routeDestination || !userLocation) return;
 
@@ -162,18 +214,53 @@ export function EcoMap({
           (c: [number, number]) => [c[1], c[0]] as [number, number]
         );
 
-        routeLayerRef.current = L.polyline(coords, {
-          color: "hsl(142, 76%, 36%)",
-          weight: 5,
-          opacity: 0.8,
-        }).addTo(mapRef.current);
+        setRouteCoords(coords);
 
-        mapRef.current.fitBounds(routeLayerRef.current.getBounds(), {
+        mapRef.current.fitBounds(L.latLngBounds(coords), {
           padding: [50, 50],
         });
       })
       .catch(() => {});
   }, [routeDestination, userLocation]);
+
+  useEffect(() => {
+    if (!mapRef.current || !LRef.current) return;
+    if (!routeCoords.length || !userLocation) return;
+
+    if (completedRouteRef.current) {
+      completedRouteRef.current.remove();
+      completedRouteRef.current = null;
+    }
+    if (remainingRouteRef.current) {
+      remainingRouteRef.current.remove();
+      remainingRouteRef.current = null;
+    }
+
+    const L = LRef.current;
+    const { closestPoint, closestIndex } = getClosestRoutePoint(routeCoords, userLocation);
+
+    const completedCoords = routeCoords.slice(0, closestIndex + 1);
+    if (distanceSquared(completedCoords[completedCoords.length - 1], closestPoint) > 0) {
+      completedCoords.push(closestPoint);
+    }
+
+    const remainingCoords = [
+      closestPoint,
+      ...routeCoords.slice(closestIndex + 1),
+    ];
+
+    completedRouteRef.current = L.polyline(completedCoords, {
+      color: "hsl(0, 0%, 65%)",
+      weight: 6,
+      opacity: 0.9,
+    }).addTo(mapRef.current);
+
+    remainingRouteRef.current = L.polyline(remainingCoords, {
+      color: "hsl(142, 76%, 36%)",
+      weight: 6,
+      opacity: 0.9,
+    }).addTo(mapRef.current);
+  }, [routeCoords, userLocation]);
 
   return (
     <div className={styles.wrapper}>

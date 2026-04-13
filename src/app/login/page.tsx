@@ -3,29 +3,30 @@
 import styles from "./styles.module.css";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Fingerprint } from "lucide-react";
 import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
 import { loginEmpresa as loginRequest } from "@/services/auth";
-import { useTranslations } from "next-intl";
+import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 
 export default function Login() {
   const router = useRouter();
-  const { login } = useAuth();
-  const t = useTranslations("LoginEmpresa");
+  const { login, restoreAuth } = useAuth();
+  const { supported: bioSupported, enrolled: bioEnrolled, authenticate, getAuthCache } = useBiometricAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [bioLoading, setBioLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
-      alert(t("missingData"));
+      alert("Preencha todos os campos");
       return;
     }
 
@@ -37,9 +38,42 @@ export default function Login() {
 
       router.push(routes.meusPontos);
     } catch (err: any) {
-      alert(err.message || t("error"));
+      alert(err.message || "Erro ao fazer login");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    if (!bioSupported || !bioEnrolled) {
+      alert("Biometria nao ativada neste dispositivo.");
+      return;
+    }
+
+    setBioLoading(true);
+
+    try {
+      const authenticated = await authenticate();
+      if (!authenticated) {
+        alert("Falha na autenticacao biometrica.");
+        return;
+      }
+
+      const cache = getAuthCache();
+      if (!cache || cache.tipo !== "cooperative") {
+        alert("Faca login com email e senha ao menos uma vez para habilitar biometria.");
+        return;
+      }
+
+      if (Date.now() > cache.expiresAt) {
+        alert("Sessao biometrica expirada. Faca login novamente com email e senha.");
+        return;
+      }
+
+      restoreAuth(cache);
+      router.push(routes.meusPontos);
+    } finally {
+      setBioLoading(false);
     }
   };
 
@@ -50,40 +84,47 @@ export default function Login() {
           className={styles.backButton}
           onClick={() => router.push(routes.home)}
         >
-          <ArrowLeft size={16} /> {t("goBack")}
+          <ArrowLeft size={16} /> Voltar
         </div>
 
         <div className={styles.header}>
           <AppIcon size={56} />
-          <h1 className="text-title">{t("title")}</h1>
-          <p className="text-small">{t("subtitle")}</p>
+          <h1 className="text-title">Login Empresa</h1>
+          <p className="text-small">Acesse a area de gerenciamento</p>
         </div>
 
         <form onSubmit={handleLogin} className={styles.form}>
           <TextField
-            label={t("email")}
+            label="Email"
             type="email"
-            placeholder={t("emailPlaceholder")}
+            placeholder="empresa@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <TextField
-            label={t("password")}
+            label="Senha"
             type="password"
-            placeholder={t("passwordPlaceholder")}
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <PrimaryButton type="submit" disabled={loading}>
-            {loading ? t("entering") : t("enter")}
+            {loading ? "Entrando..." : "Entrar"}
           </PrimaryButton>
+
+          {bioSupported && bioEnrolled && (
+            <PrimaryButton type="button" onClick={handleBiometricLogin} disabled={bioLoading}>
+              <Fingerprint size={16} />
+              {bioLoading ? "Validando biometria..." : "Entrar com biometria"}
+            </PrimaryButton>
+          )}
         </form>
 
         <div className={styles.footer}>
           <p className="text-small">
-            {t("noAccount")}
+            Nao tem conta? 
             <span
               style={{
                 color: "hsl(var(--primary))",
@@ -92,7 +133,7 @@ export default function Login() {
               }}
               onClick={() => router.push(routes.cadastro)}
             >
-              {t("register")}
+              Cadastre sua empresa
             </span>
           </p>
         </div>

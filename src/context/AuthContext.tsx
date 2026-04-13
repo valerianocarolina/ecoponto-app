@@ -10,12 +10,20 @@ type User = {
 
 type Tipo = "user" | "cooperative" | null;
 
+type AuthPayload = {
+  token: string;
+  user: User;
+  tipo: Exclude<Tipo, null>;
+  expiresAt: number;
+};
+
 type AuthContextType = {
   user: User | null;
   token: string | null;
   tipo: Tipo;
   loading: boolean;
   login: (data: any, tipo: Tipo) => void;
+  restoreAuth: (payload: AuthPayload) => void;
   logout: () => void;
   updateUser: (user: User) => void;
 };
@@ -49,21 +57,34 @@ export function AuthProvider({ children }: any) {
   }, []);
 
   const login = (data: any, tipo: Tipo) => {
+    if (!tipo) return;
+
     const token = data.token;
     const userData = tipo === "user" ? data.usuario : data.cooperativa;
 
-    const payload = {
+    const payload: AuthPayload = {
       token,
       user: userData,
-      tipo,
-      expiresAt: Date.now() + 1000 * 60 * 60,
+      tipo: tipo as Exclude<Tipo, null>,
+      expiresAt: Date.now() + 1000 * 60 * 60 * 24, // 24 horas em vez de 1 hora
     };
 
     localStorage.setItem("auth", JSON.stringify(payload));
 
+    if (localStorage.getItem("biometricEnrolled") === "true") {
+      localStorage.setItem("biometricAuthCache", JSON.stringify(payload));
+    }
+
     setToken(token);
     setUser(userData);
     setTipo(tipo);
+  };
+
+  const restoreAuth = (payload: AuthPayload) => {
+    localStorage.setItem("auth", JSON.stringify(payload));
+    setToken(payload.token);
+    setUser(payload.user);
+    setTipo(payload.tipo);
   };
 
   const updateUser = (userData: User) => {
@@ -98,7 +119,7 @@ export function AuthProvider({ children }: any) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, tipo, login, logout, loading, updateUser }}
+      value={{ user, token, tipo, login, restoreAuth, logout, loading, updateUser }}
     >
       {children}
     </AuthContext.Provider>

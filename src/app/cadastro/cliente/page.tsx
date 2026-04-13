@@ -9,12 +9,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
-import { useTranslations } from "next-intl";
 
 
 export default function CadastroCliente() {
     const router = useRouter();
-    const t = useTranslations("CadastroCliente");
 
     const [form, setForm] = useState({
         nome: "",
@@ -39,7 +37,7 @@ export default function CadastroCliente() {
             localStorage.setItem("token", data.token);
             router.push(routes.mapa);
         } catch (err: any) {
-            alert(err.message || t("error"));
+            alert(err.message || "Erro ao cadastrar");
         } finally {
             setLoading(false);
         }
@@ -54,17 +52,17 @@ export default function CadastroCliente() {
 
                 <div className={styles.header}>
                     <AppIcon size={56} />
-                    <h1 className="text-title">{t("title")}</h1>
-                    <p className="text-small">{t("subtitle")}</p>
+                    <h1 className="text-title">Cadastro Cliente</h1>
+                    <p className="text-small">Crie sua conta</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
-                    <TextField label={t("name")} value={form.nome} placeholder={t("namePlaceholder")} onChange={(e) => handleChange("nome", e.target.value)}/>
-                    <TextField label={t("email")} value={form.email} placeholder={t("emailPlaceholder")} onChange={(e) => handleChange("email", e.target.value)}/>
-                    <TextField label={t("password")} type="password" value={form.senha} placeholder={t("passwordPlaceholder")} onChange={(e) => handleChange("senha", e.target.value)}/>
+                    <TextField label="Nome" value={form.nome} placeholder="Seu nome" onChange={(e) => handleChange("nome", e.target.value)}/>
+                    <TextField label="Email" value={form.email} placeholder="Seu email" onChange={(e) => handleChange("email", e.target.value)}/>
+                    <TextField label="Senha" type="password" value={form.senha} placeholder="Sua senha" onChange={(e) => handleChange("senha", e.target.value)}/>
 
                     <PrimaryButton type="submit" disabled={loading}>
-                        {loading ? t("creating") : t("create")}
+                        {loading ? "Cadastrando..." : "Cadastrar"}
                     </PrimaryButton>
                 </form>
             </div>
