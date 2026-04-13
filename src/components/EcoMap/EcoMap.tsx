@@ -224,14 +224,15 @@ export function EcoMap({
 
       const [lat1, lng1] = origin;
       const [lat2, lng2] = destination;
-      const profiles = ["driving", "foot"];
+      const endpoints = [
+        `https://routing.openstreetmap.de/routed-car/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`,
+        `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`,
+      ];
 
-      for (const profile of profiles) {
+      for (const url of endpoints) {
         try {
-          const res = await fetch(
-            `https://router.project-osrm.org/route/v1/${profile}/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`,
-            { signal: controller.signal }
-          );
+          const res = await fetch(url, { signal: controller.signal });
+          if (!res.ok) continue;
           const data = await res.json();
 
           if (!data.routes?.[0] || !mapRef.current) {

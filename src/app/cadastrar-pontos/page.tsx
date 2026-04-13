@@ -204,9 +204,6 @@ function CadastrarPontoContent() {
       const endereco = `${form.logradouro}, ${form.numero} - ${form.bairro}, ${form.cidade} - ${form.uf}`;
       const apiHorario = scheduleToApiHorario(schedule);
       
-      console.log("[DEBUG] handleConfirmSave - schedule (estado React):", schedule);
-      console.log("[DEBUG] handleConfirmSave - apiHorario (convertido):", apiHorario);
-      
       const payload = {
         nome: form.nome,
         cep: form.cep,
@@ -221,8 +218,6 @@ function CadastrarPontoContent() {
         imagemFile: imageFile,
         horario: apiHorario,
       };
-      
-      console.log("[DEBUG] handleConfirmSave - payload completo:", JSON.stringify(payload, null, 2));
 
       if (editing && pointId) {
         await updatePoint(pointId, payload);
