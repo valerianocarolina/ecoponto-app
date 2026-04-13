@@ -81,6 +81,11 @@ export default function ClientePerfil() {
   };
 
   const toggleBiometric = async () => {
+    if (!bioSupported) {
+      toast.error("Seu dispositivo não suporta biometria.");
+      return;
+    }
+
     if (bioEnrolled) {
       bioUnenroll();
       toast.success("Biometria desativada.");
@@ -137,12 +142,14 @@ export default function ClientePerfil() {
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Salvar Alterações
           </PrimaryButton>
-          {bioSupported && (
-            <button onClick={toggleBiometric} className={`${s.secondaryButton}`}>
-              <Fingerprint className="h-4 w-4" />
-              {bioEnrolled ? "Desativar Biometria" : "Ativar Login Biométrico"}
-            </button>
-          )}
+          <button onClick={toggleBiometric} className={`${s.secondaryButton}`}>
+            <Fingerprint className="h-4 w-4" />
+            {bioSupported
+              ? bioEnrolled
+                ? "Desativar Biometria"
+                : "Ativar Login Biométrico"
+              : "Biometria indisponível"}
+          </button>
           {notifSupported && (
             <button onClick={toggleNotifications} className={`${s.secondaryButton}`}>
               {notifPermission === "granted" ? <><Bell className="h-4 w-4" /> Notificações Ativadas</> : <><BellOff className="h-4 w-4" /> Ativar Notificações</>}
