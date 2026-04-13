@@ -7,6 +7,7 @@ type Props = {
   placeholder?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  autoComplete?: string;
   error?: string;
   style?: React.CSSProperties;
   disabled?: boolean;
@@ -18,6 +19,7 @@ export function TextField({
   placeholder,
   value,
   onChange,
+  autoComplete,
   error,
   style,
   disabled = false,
@@ -31,6 +33,7 @@ export function TextField({
         type={type}
         placeholder={placeholder}
         value={value}
+        autoComplete={autoComplete}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e)}
         variant="borderless"
         disabled={disabled}

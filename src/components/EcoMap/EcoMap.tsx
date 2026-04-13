@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CollectionPoint, MATERIAL_LABELS_DATA } from "@/data/collectionPoints";
 import { formatHours } from "@/util/formatHours";
 import styles from "./EcoMap.module.css";
@@ -18,6 +18,20 @@ function distanceSquared(a: [number, number], b: [number, number]) {
   const dLat = a[0] - b[0];
   const dLng = a[1] - b[1];
   return dLat * dLat + dLng * dLng;
+}
+
+function distanceMeters(a: [number, number], b: [number, number]) {
+  const R = 6371000;
+  const dLat = ((b[0] - a[0]) * Math.PI) / 180;
+  const dLng = ((b[1] - a[1]) * Math.PI) / 180;
+  const lat1 = (a[0] * Math.PI) / 180;
+  const lat2 = (b[0] * Math.PI) / 180;
+
+  const h =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+  return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
 function getClosestPointOnSegment(
@@ -71,6 +85,10 @@ export function EcoMap({
   const userMarkerRef = useRef<any | null>(null);
   const completedRouteRef = useRef<any | null>(null);
   const remainingRouteRef = useRef<any | null>(null);
+  const routeRequestRef = useRef<AbortController | null>(null);
+  const lastRouteOriginRef = useRef<[number, number] | null>(null);
+  const lastRequestedDestinationRef = useRef<string | null>(null);
+  const lastRerouteAtRef = useRef<number>(0);
   const initialFlyDone = useRef(false);
   const [isReady, setIsReady] = useState(false);
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
@@ -183,9 +201,7 @@ export function EcoMap({
     }
   }, [selectedPoint]);
 
-  useEffect(() => {
-    if (!mapRef.current || !LRef.current) return;
-
+  const clearRoutePolylines = useCallback(() => {
     if (completedRouteRef.current) {
       completedRouteRef.current.remove();
       completedRouteRef.current = null;
@@ -194,47 +210,123 @@ export function EcoMap({
       remainingRouteRef.current.remove();
       remainingRouteRef.current = null;
     }
+  }, []);
 
-    setRouteCoords([]);
+  const requestRoute = useCallback(
+    async (
+      origin: [number, number],
+      destination: [number, number],
+      fitBounds = false
+    ) => {
+      routeRequestRef.current?.abort();
+      const controller = new AbortController();
+      routeRequestRef.current = controller;
 
-    if (!routeDestination || !userLocation) return;
+      const [lat1, lng1] = origin;
+      const [lat2, lng2] = destination;
+      const profiles = ["driving", "foot"];
 
-    const L = LRef.current;
-    const [lat1, lng1] = userLocation;
-    const { lat: lat2, lng: lng2 } = routeDestination;
+      for (const profile of profiles) {
+        try {
+          const res = await fetch(
+            `https://router.project-osrm.org/route/v1/${profile}/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`,
+            { signal: controller.signal }
+          );
+          const data = await res.json();
 
-    fetch(
-      `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.routes?.[0] || !mapRef.current) return;
+          if (!data.routes?.[0] || !mapRef.current) {
+            continue;
+          }
 
-        const coords: [number, number][] = data.routes[0].geometry.coordinates.map(
-          (c: [number, number]) => [c[1], c[0]] as [number, number]
-        );
+          const coords: [number, number][] = data.routes[0].geometry.coordinates.map(
+            (c: [number, number]) => [c[1], c[0]] as [number, number]
+          );
 
-        setRouteCoords(coords);
+          if (coords.length < 2) {
+            continue;
+          }
 
-        mapRef.current.fitBounds(L.latLngBounds(coords), {
-          padding: [50, 50],
-        });
-      })
-      .catch(() => {});
-  }, [routeDestination, userLocation]);
+          setRouteCoords(coords);
+          lastRouteOriginRef.current = origin;
+          lastRerouteAtRef.current = Date.now();
+
+          if (fitBounds && LRef.current && mapRef.current) {
+            mapRef.current.fitBounds(LRef.current.latLngBounds(coords), {
+              padding: [50, 50],
+            });
+          }
+
+          return;
+        } catch (error: any) {
+          if (error?.name === "AbortError") {
+            return;
+          }
+        }
+      }
+
+      // Fallback para manter navegação funcional mesmo sem resposta da API.
+      setRouteCoords([origin, destination]);
+      lastRouteOriginRef.current = origin;
+      lastRerouteAtRef.current = Date.now();
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!routeDestination || !userLocation) {
+      routeRequestRef.current?.abort();
+      clearRoutePolylines();
+      setRouteCoords([]);
+      lastRouteOriginRef.current = null;
+      lastRequestedDestinationRef.current = null;
+      return;
+    }
+
+    const destinationKey = `${routeDestination.lat},${routeDestination.lng}`;
+    if (
+      destinationKey === lastRequestedDestinationRef.current &&
+      routeCoords.length >= 2
+    ) {
+      return;
+    }
+
+    lastRequestedDestinationRef.current = destinationKey;
+
+    requestRoute(
+      userLocation,
+      [routeDestination.lat, routeDestination.lng],
+      true
+    );
+  }, [
+    routeDestination,
+    requestRoute,
+    clearRoutePolylines,
+    routeCoords.length,
+    userLocation,
+  ]);
+
+  useEffect(() => {
+    if (!routeDestination || !userLocation || routeCoords.length < 2) return;
+
+    const destination: [number, number] = [routeDestination.lat, routeDestination.lng];
+    const { closestPoint } = getClosestRoutePoint(routeCoords, userLocation);
+    const offRouteDistance = distanceMeters(userLocation, closestPoint);
+    const movedFromLastRoute = lastRouteOriginRef.current
+      ? distanceMeters(userLocation, lastRouteOriginRef.current)
+      : Number.POSITIVE_INFINITY;
+    const now = Date.now();
+    const canReroute = now - lastRerouteAtRef.current > 12000;
+
+    if (canReroute && (offRouteDistance > 80 || movedFromLastRoute > 250)) {
+      requestRoute(userLocation, destination, false);
+    }
+  }, [routeCoords, routeDestination, requestRoute, userLocation]);
 
   useEffect(() => {
     if (!mapRef.current || !LRef.current) return;
     if (!routeCoords.length || !userLocation) return;
 
-    if (completedRouteRef.current) {
-      completedRouteRef.current.remove();
-      completedRouteRef.current = null;
-    }
-    if (remainingRouteRef.current) {
-      remainingRouteRef.current.remove();
-      remainingRouteRef.current = null;
-    }
+    clearRoutePolylines();
 
     const L = LRef.current;
     const { closestPoint, closestIndex } = getClosestRoutePoint(routeCoords, userLocation);
@@ -260,7 +352,13 @@ export function EcoMap({
       weight: 6,
       opacity: 0.9,
     }).addTo(mapRef.current);
-  }, [routeCoords, userLocation]);
+  }, [clearRoutePolylines, routeCoords, userLocation]);
+
+  useEffect(() => {
+    return () => {
+      routeRequestRef.current?.abort();
+    };
+  }, []);
 
   return (
     <div className={styles.wrapper}>
