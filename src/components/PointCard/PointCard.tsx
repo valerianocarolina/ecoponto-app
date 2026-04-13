@@ -33,7 +33,18 @@ export function PointCard({
   const imageUrl = point.imageUrl || point.imagem;
 
   return (
-    <button onClick={() => onSelect(point)} className={s.card}>
+    <article
+      className={s.card}
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(point)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(point);
+        }
+      }}
+    >
       <img
         src={imageUrl || "/default-point.jpg"}
         alt={name}
@@ -70,6 +81,7 @@ export function PointCard({
           <span
             role="button"
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               if (!hasUserLocation) {
                 toast.error(
@@ -87,6 +99,7 @@ export function PointCard({
             <button
               type="button"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 onToggleFavorite(point);
               }}
@@ -107,6 +120,6 @@ export function PointCard({
           )}
         </div>
       </div>
-    </button>
+    </article>
   );
 }

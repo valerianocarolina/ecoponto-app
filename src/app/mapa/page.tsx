@@ -10,6 +10,7 @@ import {
   UserCircle,
   Bell,
   BellOff,
+  Heart,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
@@ -26,6 +27,8 @@ import { EcoMap } from "@/components/EcoMap/EcoMap";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import styles from "./styles.module.css";
 import { getAllCollectionPoints } from "@/services/points";
+import { ProtectedRoute } from "@/components/ProtectedRoute/ProtectedRoute";
+import { getFavoriteIds, toggleFavoritePoint } from "@/services/favorites";
 
 function calculateDistance(
   lat1: number,
@@ -69,7 +72,9 @@ export default function MapPage() {
     useState<NotificationPermission>("default");
   const [isLoadingPoints, setIsLoadingPoints] = useState(true);
   const [locationToastShown, setLocationToastShown] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const knownPointIdsRef = useRef<Set<string>>(new Set());
+  const userFavoritesKey = user?.email || "anonymous";
 
   const userLocation = geo.position;
 
@@ -175,6 +180,10 @@ export default function MapPage() {
     }
   }, [geo.position, geo.loading, locationToastShown]);
 
+  useEffect(() => {
+    setFavoriteIds(getFavoriteIds(userFavoritesKey));
+  }, [userFavoritesKey]);
+
   const filteredPoints = useMemo(() => {
     if (filters.length === 0) return points;
     return points.filter((p) => {
@@ -224,9 +233,29 @@ export default function MapPage() {
     );
   };
 
+  const handleToggleFavorite = (point: CollectionPoint) => {
+    const isNowFavorited = toggleFavoritePoint(userFavoritesKey, point);
+    const pointId = String(point._id || point.id || "");
+
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (isNowFavorited) {
+        next.add(pointId);
+      } else {
+        next.delete(pointId);
+      }
+      return next;
+    });
+
+    toast.success(
+      isNowFavorited ? "Ponto adicionado aos favoritos" : "Ponto removido dos favoritos"
+    );
+  };
+
   return (
-    <div className={styles.layout}>
-      <Toaster position="top-right" />
+    <ProtectedRoute requiredType="user">
+      <div className={styles.layout}>
+        <Toaster position="bottom-right" />
 
       <header className={styles.header}>
         <div className={styles.headerLeft}>
@@ -251,6 +280,15 @@ export default function MapPage() {
           >
             {notificationPermission === "granted" ? <Bell size={16} /> : <BellOff size={16} />}
           </button>
+          {user && (
+            <button
+              onClick={() => router.push(routes.favoritos)}
+              className={styles.iconBtn}
+              title="Favoritos"
+            >
+              <Heart size={16} />
+            </button>
+          )}
           {user && (
             <button
               onClick={() => router.push(routes.perfilCliente)}
@@ -305,8 +343,8 @@ export default function MapPage() {
 
           <div className={styles.statusBar}>
             <span className={styles.statusText}>
-              {sortedPoints.length} ponto{sortedPoints.length !== 1 ? "styles" : ""}{" "}
-              encontrado{sortedPoints.length !== 1 ? "styles" : ""}
+              {sortedPoints.length} ponto{sortedPoints.length !== 1 ? "s" : ""}{" "}
+              encontrado{sortedPoints.length !== 1 ? "s" : ""}
             </span>
             <div className={styles.accuracyInfo}>
               {geo.accuracy && (
@@ -353,7 +391,8 @@ export default function MapPage() {
                     point={point}
                     distance={distance || undefined}
                     hasUserLocation={!!userLocation}
-                    isFavorited={false}
+                    isFavorited={favoriteIds.has(String(point._id || point.id || ""))}
+                    onToggleFavorite={handleToggleFavorite}
                     onSelect={(pt) => {
                       setSelectedPoint(pt);
                       setPanelOpen(false);
@@ -384,5 +423,6 @@ export default function MapPage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

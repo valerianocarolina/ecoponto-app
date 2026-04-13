@@ -1,9 +1,28 @@
 import { DAYS, type DayKey } from "@/lib/schedule";
 
 export function formatHours(horario: any) {
-  if (!horario) return "";
-  if (typeof horario === "string") return horario;
-  if (typeof horario !== "object") return String(horario);
+  if (!horario) {
+    console.log("[DEBUG] formatHours - horario vazio/null");
+    return "";
+  }
+
+  let parsedHorario = horario;
+
+  if (typeof parsedHorario === "string") {
+    try {
+      parsedHorario = JSON.parse(parsedHorario);
+    } catch {
+      console.log("[DEBUG] formatHours - string não é JSON válido, retornando como-está:", parsedHorario);
+      return parsedHorario;
+    }
+  }
+
+  if (typeof parsedHorario !== "object") {
+    console.log("[DEBUG] formatHours - não é object após parse:", typeof parsedHorario);
+    return String(parsedHorario);
+  }
+
+  console.log("[DEBUG] formatHours - objeto parseado:", JSON.stringify(parsedHorario, null, 2));
 
   const groups: Array<{
     days: Array<{ key: DayKey; label: string }>;
@@ -12,7 +31,7 @@ export function formatHours(horario: any) {
   }> = [];
 
   DAYS.forEach((day, index) => {
-    const dayData = horario[day.key];
+    const dayData = parsedHorario[day.key];
     if (!dayData || dayData.aberto === false) return;
 
     const inicio = dayData.inicio || "";

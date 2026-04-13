@@ -3,7 +3,7 @@
 import styles from "./styles.module.css";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Fingerprint } from "lucide-react";
+import { Loader2, Fingerprint, LogOut } from "lucide-react";
 
 import { PageHeader } from "@/components/PageHeader/PageHeader";
 import { ConfirmDialog } from "@/components/ConfirmDialog/ConfirmDialog";
@@ -14,6 +14,19 @@ import { useAuth } from "@/context/AuthContext";
 import { getEmpresa, updateEmpresa, deleteEmpresa } from "@/services/empresa";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { toast } from "sonner";
+import { routes } from "@/routes/routes";
+
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)})${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)})${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  return `(${digits.slice(0, 2)})${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
 
 export default function EmpresaPerfil() {
   const router = useRouter();
@@ -29,6 +42,7 @@ export default function EmpresaPerfil() {
   const [email, setEmail] = useState("");
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -36,7 +50,7 @@ export default function EmpresaPerfil() {
         const company = await getEmpresa();
         setName(company.nome || "");
         setCnpj(company.cnpj || "");
-        setPhone(company.telefone || "");
+        setPhone(formatPhone(company.telefone || ""));
         setEmail(company.email || "");
       } catch (error) {
         console.error(error);
@@ -138,7 +152,7 @@ export default function EmpresaPerfil() {
             <TextField
               label="Telefone"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(formatPhone(e.target.value))}
               placeholder="(00) 00000-0000"
             />
 
@@ -163,12 +177,21 @@ export default function EmpresaPerfil() {
                 <SmallButtonWithIcon
                   fullWidth
                   variant="secondary"
+                  icon={<Fingerprint size={16} />}
                   onClick={toggleBiometric}
                 >
-                  <Fingerprint size={16} />
                   {bioEnrolled ? "Desativar Biometria" : "Ativar Login Biométrico"}
                 </SmallButtonWithIcon>
               )}
+
+              <SmallButtonWithIcon
+                fullWidth
+                variant="secondary"
+                icon={<LogOut size={16} />}
+                onClick={() => setShowLogoutConfirm(true)}
+              >
+                Sair da conta
+              </SmallButtonWithIcon>
             </div>
           </section>
 
@@ -194,6 +217,14 @@ export default function EmpresaPerfil() {
           onConfirm={handleSave}
           onCancel={() => setShowSaveConfirm(false)}
           loading={saving}
+        />
+
+        <ConfirmDialog
+          open={showLogoutConfirm}
+          title="Sair da conta"
+          description="Tem certeza que deseja sair?"
+          onConfirm={() => { logout(); router.push(routes.login); }}
+          onCancel={() => setShowLogoutConfirm(false)}
         />
 
         <ConfirmDialog

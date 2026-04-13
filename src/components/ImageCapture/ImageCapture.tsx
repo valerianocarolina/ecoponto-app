@@ -6,11 +6,11 @@ import styles from "./styles.module.css";
 import { Button } from "../ButtonWithIcon/ButtonWithIcon";
 
 type Props = {
-  onImageUrl: (url: string) => void;
+  onImageChange: (file: File | null, previewUrl: string) => void;
   initialUrl?: string;
 };
 
-export function ImageCapture({ onImageUrl, initialUrl }: Props) {
+export function ImageCapture({ onImageChange, initialUrl }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(initialUrl || null);
 
@@ -24,7 +24,7 @@ export function ImageCapture({ onImageUrl, initialUrl }: Props) {
     reader.onloadend = () => {
       const base64 = reader.result as string;
       setPreview(base64);
-      onImageUrl(base64);
+      onImageChange(file, base64);
     };
 
     reader.readAsDataURL(file);
@@ -41,7 +41,7 @@ export function ImageCapture({ onImageUrl, initialUrl }: Props) {
             className={styles.removeBtn}
             onClick={() => {
               setPreview(null);
-              onImageUrl("");
+              onImageChange(null, "");
             }}
           >
             <X className={styles.removeIcon} />

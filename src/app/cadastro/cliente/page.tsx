@@ -29,13 +29,22 @@ export default function CadastroCliente() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!form.nome || !form.email || !form.senha) {
+            alert("Preencha todos os campos");
+            return;
+        }
+
+        if (form.senha.length < 6) {
+            alert("A senha deve ter pelo menos 6 digitos");
+            return;
+        }
+
         try {
             setLoading(true);
 
-            const data = await registerCliente(form);
+            await registerCliente(form);
 
-            localStorage.setItem("token", data.token);
-            router.push(routes.mapa);
+            router.push(`${routes.loginCliente}?email=${encodeURIComponent(form.email)}`);
         } catch (err: any) {
             alert(err.message || "Erro ao cadastrar");
         } finally {

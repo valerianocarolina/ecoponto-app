@@ -58,6 +58,7 @@ function CadastrarPontoContent() {
   const editing = Boolean(pointId);
 
   const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [form, setForm] = useState({
     nome: "",
@@ -119,6 +120,17 @@ function CadastrarPontoContent() {
 
       try {
         const point = await getPoint(pointId || "");
+        let parsedTags: MaterialType[] = [];
+        if (Array.isArray(point.tags)) {
+          parsedTags = point.tags;
+        } else if (typeof point.tags === "string") {
+          try {
+            const parsed = JSON.parse(point.tags);
+            parsedTags = Array.isArray(parsed) ? parsed : [];
+          } catch {
+            parsedTags = [];
+          }
+        }
 
         setForm({
           nome: point.nome || "",
@@ -131,8 +143,9 @@ function CadastrarPontoContent() {
         });
 
         setSchedule(parseScheduleInput(point.horario || ""));
-        setMaterials(point.tags || []);
+  setMaterials(parsedTags);
         setImageUrl(point.imagem || "");
+        setImageFile(null);
       } catch (err) {
         console.error(err);
         alert("Erro ao carregar dados do ponto para edicao");
@@ -189,6 +202,11 @@ function CadastrarPontoContent() {
 
     try {
       const endereco = `${form.logradouro}, ${form.numero} - ${form.bairro}, ${form.cidade} - ${form.uf}`;
+      const apiHorario = scheduleToApiHorario(schedule);
+      
+      console.log("[DEBUG] handleConfirmSave - schedule (estado React):", schedule);
+      console.log("[DEBUG] handleConfirmSave - apiHorario (convertido):", apiHorario);
+      
       const payload = {
         nome: form.nome,
         cep: form.cep,
@@ -199,9 +217,12 @@ function CadastrarPontoContent() {
         uf: form.uf,
         endereco,
         tags: materials,
-        imagem: imageUrl || "",
-        horario: scheduleToApiHorario(schedule),
+        imagem: imageFile ? undefined : imageUrl || "",
+        imagemFile: imageFile,
+        horario: apiHorario,
       };
+      
+      console.log("[DEBUG] handleConfirmSave - payload completo:", JSON.stringify(payload, null, 2));
 
       if (editing && pointId) {
         await updatePoint(pointId, payload);
@@ -237,7 +258,7 @@ function CadastrarPontoContent() {
         <div className={styles.content}>
           {pointLoading ? (
             <div className={styles.loading}>
-              <Loader2 />
+              <Loader2 className={styles.loadingSpinner} />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className={styles.form}>
@@ -292,10 +313,16 @@ function CadastrarPontoContent() {
             </div>
             </div>
 
-            <ImageCapture onImageUrl={setImageUrl} />
+            <ImageCapture
+              initialUrl={imageUrl}
+              onImageChange={(file, previewUrl) => {
+                setImageFile(file);
+                setImageUrl(previewUrl);
+              }}
+            />
 
             <PrimaryButton type="submit" disabled={loading}>
-              {loading ? <Loader2 size={16} /> : editing ? "Atualizar ponto" : "Cadastrar ponto"}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : editing ? "Atualizar ponto" : "Cadastrar ponto"}
             </PrimaryButton>
           </form>
           )}

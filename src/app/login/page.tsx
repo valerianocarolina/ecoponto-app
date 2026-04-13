@@ -1,9 +1,9 @@
 "use client";
 
 import styles from "./styles.module.css";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Fingerprint } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
@@ -12,15 +12,38 @@ import { routes } from "@/routes/routes";
 import { loginEmpresa as loginRequest } from "@/services/auth";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 
-export default function Login() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, restoreAuth } = useAuth();
   const { supported: bioSupported, enrolled: bioEnrolled, authenticate, getAuthCache } = useBiometricAuth();
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [bioLoading, setBioLoading] = useState(false);
+
+  useEffect(() => {
+    if (!bioSupported || !bioEnrolled) return;
+
+    const tryBiometric = async () => {
+      const cache = getAuthCache();
+      if (!cache || cache.tipo !== "cooperative" || Date.now() > cache.expiresAt) return;
+
+      setBioLoading(true);
+      try {
+        const authenticated = await authenticate();
+        if (authenticated) {
+          restoreAuth(cache);
+          router.push(routes.meusPontos);
+        }
+      } finally {
+        setBioLoading(false);
+      }
+    };
+
+    tryBiometric();
+  }, [bioSupported, bioEnrolled]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,38 +67,7 @@ export default function Login() {
     }
   };
 
-  const handleBiometricLogin = async () => {
-    if (!bioSupported || !bioEnrolled) {
-      alert("Biometria nao ativada neste dispositivo.");
-      return;
-    }
 
-    setBioLoading(true);
-
-    try {
-      const authenticated = await authenticate();
-      if (!authenticated) {
-        alert("Falha na autenticacao biometrica.");
-        return;
-      }
-
-      const cache = getAuthCache();
-      if (!cache || cache.tipo !== "cooperative") {
-        alert("Faca login com email e senha ao menos uma vez para habilitar biometria.");
-        return;
-      }
-
-      if (Date.now() > cache.expiresAt) {
-        alert("Sessao biometrica expirada. Faca login novamente com email e senha.");
-        return;
-      }
-
-      restoreAuth(cache);
-      router.push(routes.meusPontos);
-    } finally {
-      setBioLoading(false);
-    }
-  };
 
   return (
     <main className="screen">
@@ -99,6 +91,7 @@ export default function Login() {
             type="email"
             placeholder="empresa@email.com"
             value={email}
+            autoComplete="email"
             onChange={(e) => setEmail(e.target.value)}
           />
 
@@ -108,23 +101,23 @@ export default function Login() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
           />
 
-          <PrimaryButton type="submit" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
+          <PrimaryButton type="submit" disabled={loading || bioLoading}>
+            {bioLoading ? "Verificando biometria..." : loading ? "Entrando..." : "Entrar"}
           </PrimaryButton>
 
-          {bioSupported && bioEnrolled && (
-            <PrimaryButton type="button" onClick={handleBiometricLogin} disabled={bioLoading}>
-              <Fingerprint size={16} />
-              {bioLoading ? "Validando biometria..." : "Entrar com biometria"}
-            </PrimaryButton>
+          {bioLoading && (
+            <p style={{ textAlign: "center", fontSize: "0.875rem", color: "hsl(var(--muted-foreground))" }}>
+              Tentando login biométrico...
+            </p>
           )}
         </form>
 
         <div className={styles.footer}>
           <p className="text-small">
-            Nao tem conta? 
+            Nao tem conta?{" "}
             <span
               style={{
                 color: "hsl(var(--primary))",
@@ -139,5 +132,13 @@ export default function Login() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<main className="screen" />}>
+      <LoginContent />
+    </Suspense>
   );
 }

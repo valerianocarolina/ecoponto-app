@@ -10,7 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute/ProtectedRoute";
 import { ConfirmDialog } from "@/components/ConfirmDialog/ConfirmDialog";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
-import { getPoints, deletePoint } from "@/services/points";
+import { getPoints, deletePoint, getPoint } from "@/services/points";
 import { formatHours } from "@/util/formatHours";
 import { SmallButtonWithIcon } from "@/components/SmallButtonWithIcon/SmallButtonWithIcon";
 
@@ -23,13 +23,37 @@ export default function MeusPontos() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
         const data = await getPoints();
-        console.log(data);
-        setPoints(data);
+
+        const enriched = await Promise.all(
+          (data || []).map(async (point: any) => {
+            const scheduleText = formatHours(
+              point.horario ||
+                point.hours ||
+                point.horarios ||
+                point.funcionamento ||
+                ""
+            );
+
+            if (scheduleText || !point?._id) {
+              return point;
+            }
+
+            try {
+              const fullPoint = await getPoint(point._id);
+              return { ...point, ...fullPoint };
+            } catch {
+              return point;
+            }
+          })
+        );
+
+        setPoints(enriched);
       } catch (e) {
         console.error(e);
       } finally {
@@ -39,6 +63,19 @@ export default function MeusPontos() {
 
     load();
   }, []);
+
+  function normalizeMaterials(value: any) {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
 
   function handleDeleteClick(id: string) {
     setDeleteConfirmId(id);
@@ -93,7 +130,7 @@ export default function MeusPontos() {
             <SmallButtonWithIcon
               variant="ghost"
               icon={<LogOut size={16} />}
-              onClick={logout}
+              onClick={() => setLogoutConfirmOpen(true)}
             />
           </div>
         </header>
@@ -101,7 +138,7 @@ export default function MeusPontos() {
         <div className={styles.content}>
           {loading ? (
             <div className={styles.loading}>
-              <Loader2 />
+              <Loader2 className={styles.spinner} />
             </div>
           ) : points.length === 0 ? (
             <div className={styles.emptyState}>
@@ -115,13 +152,18 @@ export default function MeusPontos() {
           ) : (
             <div className={styles.list}>
               {points.map((p) => {
+                const hoursText = formatHours(
+                  p.horario || p.hours || p.horarios || p.funcionamento || ""
+                );
+                const materials = normalizeMaterials(p.tags || p.materials);
+
                 return (
                 <PointCardAdmin
                   key={p._id}
                   name={p.nome}
                   address={p.endereco}
-                  hours={formatHours(p.horario)}
-                  materials={p.tags}
+                  hours={hoursText || "Horario nao informado"}
+                  materials={materials}
                   image={p.imagem || "/default-point.jpg"}
                   onEdit={() => router.push(`${routes.cadastraPontos}?id=${p._id}`)}
                   onDelete={() => handleDeleteClick(p._id)}
@@ -145,6 +187,14 @@ export default function MeusPontos() {
         }}
         loading={deleteLoading}
         variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        title="Sair da conta"
+        description="Tem certeza que deseja sair?"
+        onConfirm={() => { logout(); }}
+        onCancel={() => setLogoutConfirmOpen(false)}
       />
     </ProtectedRoute>
   );

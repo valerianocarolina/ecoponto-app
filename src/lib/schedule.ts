@@ -23,11 +23,22 @@ export function emptySchedule(): Schedule {
 
 export function parseScheduleInput(value: any): Schedule {
   if (!value) return emptySchedule();
-  if (typeof value !== "object") return emptySchedule();
+
+  let parsedValue = value;
+
+  if (typeof parsedValue === "string") {
+    try {
+      parsedValue = JSON.parse(parsedValue);
+    } catch {
+      return emptySchedule();
+    }
+  }
+
+  if (typeof parsedValue !== "object") return emptySchedule();
 
   const schedule = emptySchedule();
 
-  Object.entries(value as Record<string, any>).forEach(([day, item]) => {
+  Object.entries(parsedValue as Record<string, any>).forEach(([day, item]) => {
     if (!item || typeof item !== "object") return;
     const key = day as DayKey;
     if (!DAYS.some((d) => d.key === key)) return;

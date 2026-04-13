@@ -7,16 +7,35 @@ import { ArrowLeft } from "lucide-react";
 import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
-import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
 import { registerEmpresa } from "@/services/auth";
 import { isValidCNPJ } from "@/util/validateCnpj";
 import { validateEmail } from "@/util/validateEmail";
 import { validatePhone } from "@/util/validatePhone";
 
+function formatCnpj(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 14);
+  return digits
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)})${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)})${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  return `(${digits.slice(0, 2)})${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 export default function Cadastro() {
   const router = useRouter();
-  const { login } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -69,12 +88,11 @@ export default function Cadastro() {
         nome: form.name,
         email: form.email,
         telefone: form.phone,
-        documento: form.cnpj,
+        documento: form.cnpj.replace(/\D/g, ""),
         senha: form.password,
       });
 
-      login(data, "cooperative");
-      router.push(routes.meusPontos);
+      router.push(`${routes.login}?email=${encodeURIComponent(form.email)}`);
     } catch (err: any) {
       alert(err.message || "Erro ao cadastrar");
     } finally {
@@ -114,7 +132,7 @@ export default function Cadastro() {
             placeholder="00.000.000/0000-00"
             value={form.cnpj}
             onChange={(e) => {
-              set("cnpj", e.target.value);
+              set("cnpj", formatCnpj(e.target.value));
               setCnpjError("");
             }}
             error={cnpjError}
@@ -125,7 +143,7 @@ export default function Cadastro() {
             placeholder="(00) 00000-0000"
             value={form.phone}
             onChange={(e) => {
-              set("phone", e.target.value);
+              set("phone", formatPhone(e.target.value));
               setPhoneError("");
             }}
             error={phoneError}

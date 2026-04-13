@@ -1,0 +1,19 @@
+{
+  "name": "EcoPonto",
+  "short_name": "EcoPonto",
+  "description": "Encontre e gerencie pontos de coleta de reciclaveis.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f8f2",
+  "theme_color": "#1f7a39",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

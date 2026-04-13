@@ -1,71 +1,69 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import styles from "../styles.module.css";
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { loginCliente as loginRequest } from "@/services/auth";
 import { routes } from "@/routes/routes";
-import { ArrowLeft, Fingerprint } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { AppIcon } from "@/components/AppIcon/AppIcon";
 import { TextField } from "@/components/TextField/TextField";
 import { PrimaryButton } from "@/components/PrimaryButton/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 
-export default function LoginCliente() {
+function LoginClienteContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { login, restoreAuth } = useAuth();
     const { supported: bioSupported, enrolled: bioEnrolled, authenticate, getAuthCache } = useBiometricAuth();
 
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(searchParams.get("email") || "");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [bioLoading, setBioLoading] = useState(false);
 
-    const requestLocationPermission = async (): Promise<boolean> => {
-        if (!("geolocation" in navigator)) {
-            alert("Geolocalizacao nao suportada neste dispositivo.");
-            return false;
-        }
+    const requestLocationIfNeeded = async (): Promise<boolean> => {
+        if (!("geolocation" in navigator)) return true; // skip silently
 
-        const wantsToEnableLocation = window.confirm(
-            "Para continuar, precisamos da sua localizacao. Deseja ativar agora?"
-        );
-
-        if (!wantsToEnableLocation) {
-            return false;
+        if ("permissions" in navigator) {
+            try {
+                const status = await navigator.permissions.query({ name: "geolocation" });
+                if (status.state === "granted") return true;
+                if (status.state === "denied") return true; // don't block login, just proceed
+            } catch {}
         }
 
         return new Promise((resolve) => {
             navigator.geolocation.getCurrentPosition(
                 () => resolve(true),
-                (error) => {
-                    if (error.code === error.PERMISSION_DENIED) {
-                        const retry = window.confirm(
-                            "Permissao negada. No iPhone, verifique Safari > Ajustes do Site > Localizacao e tente novamente. Deseja tentar de novo?"
-                        );
-
-                        if (retry) {
-                            requestLocationPermission().then(resolve);
-                            return;
-                        }
-                    } else if (error.code === error.POSITION_UNAVAILABLE) {
-                        alert("Localizacao indisponivel no momento. Verifique se o GPS esta ativo e tente novamente.");
-                    } else if (error.code === error.TIMEOUT) {
-                        alert("Tempo esgotado ao buscar localizacao. Tente novamente em area com melhor sinal.");
-                    } else {
-                        alert("Nao foi possivel obter sua localizacao. Tente novamente.");
-                    }
-                    resolve(false);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 12000,
-                    maximumAge: 0,
-                }
+                () => resolve(true), // don't block login on error
+                { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
             );
         });
     };
+
+    useEffect(() => {
+        if (!bioSupported || !bioEnrolled) return;
+
+        const tryBiometric = async () => {
+            const cache = getAuthCache();
+            if (!cache || cache.tipo !== "user" || Date.now() > cache.expiresAt) return;
+
+            setBioLoading(true);
+            try {
+                const authenticated = await authenticate();
+                if (authenticated) {
+                    restoreAuth(cache);
+                    router.push(routes.mapa);
+                }
+            } finally {
+                setBioLoading(false);
+            }
+        };
+
+        tryBiometric();
+    }, [bioSupported, bioEnrolled]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,58 +73,16 @@ export default function LoginCliente() {
             return;
         }
 
-        const locationGranted = await requestLocationPermission();
-        if (!locationGranted) return;
-
         try {
             setLoading(true);
-
             const data = await loginRequest(email, password);
-            
-            // Usar o AuthContext para fazer login corretamente
             login(data, "user");
-
+            await requestLocationIfNeeded();
             router.push(routes.mapa);
         } catch (err: any) {
             alert(err.message || "Erro ao fazer login");
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleBiometricLogin = async () => {
-        if (!bioSupported || !bioEnrolled) {
-            alert("Biometria nao ativada neste dispositivo.");
-            return;
-        }
-
-        const locationGranted = await requestLocationPermission();
-        if (!locationGranted) return;
-
-        setBioLoading(true);
-
-        try {
-            const authenticated = await authenticate();
-            if (!authenticated) {
-                alert("Falha na autenticacao biometrica.");
-                return;
-            }
-
-            const cache = getAuthCache();
-            if (!cache || cache.tipo !== "user") {
-                alert("Faca login com email e senha ao menos uma vez para habilitar biometria.");
-                return;
-            }
-
-            if (Date.now() > cache.expiresAt) {
-                alert("Sessao biometrica expirada. Faca login novamente com email e senha.");
-                return;
-            }
-
-            restoreAuth(cache);
-            router.push(routes.mapa);
-        } finally {
-            setBioLoading(false);
         }
     };
 
@@ -148,21 +104,20 @@ export default function LoginCliente() {
 
                     <TextField label="Senha" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)}/>
 
-                    <PrimaryButton type="submit" disabled={loading}>
-                        {loading ? "Entrando..." : "Entrar"}
+                    <PrimaryButton type="submit" disabled={loading || bioLoading}>
+                        {bioLoading ? "Verificando biometria..." : loading ? "Entrando..." : "Entrar"}
                     </PrimaryButton>
 
-                    {bioSupported && bioEnrolled && (
-                        <PrimaryButton type="button" onClick={handleBiometricLogin} disabled={bioLoading}>
-                            <Fingerprint size={16} />
-                            {bioLoading ? "Validando biometria..." : "Entrar com biometria"}
-                        </PrimaryButton>
+                    {bioLoading && (
+                        <p style={{ textAlign: "center", fontSize: "0.875rem", color: "hsl(var(--muted-foreground))" }}>
+                            Tentando login biométrico...
+                        </p>
                     )}
                 </form>
 
                 <div className={styles.footer}>
                     <p className="text-small">
-                        Nao tem conta? 
+                        Nao tem conta?{" "}
                         <span style={{color: "hsl(var(--primary))", fontWeight: 500, cursor: "pointer",}} onClick={() => router.push(routes.cadastroCliente)}>
                             Cadastre-se
                         </span>
@@ -170,5 +125,13 @@ export default function LoginCliente() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function LoginCliente() {
+    return (
+        <Suspense fallback={<main className="screen" />}>
+            <LoginClienteContent />
+        </Suspense>
     );
 }

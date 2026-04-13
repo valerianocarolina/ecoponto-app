@@ -1,7 +1,36 @@
 import { apiFetch } from "./api";
 
+function toFormData(data: any) {
+  const formData = new FormData();
+  const hasImageFile = data?.imagemFile instanceof File;
+
+  Object.entries(data || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null || key === "imagemFile") return;
+
+    if ((key === "tags" || key === "horario") && typeof value !== "string") {
+      formData.append(key, JSON.stringify(value));
+      return;
+    }
+
+    if (key === "imagem" && hasImageFile) return;
+
+    formData.append(key, String(value));
+  });
+
+  if (hasImageFile) {
+    formData.append("imagem", data.imagemFile);
+  }
+
+  return formData;
+}
+
 export async function getPoints() {
   const data = await apiFetch("/pontos-coleta/meus/lista");
+  console.log("[DEBUG] getPoints - resposta completa:", JSON.stringify(data, null, 2));
+  if (data.pontos) {
+    console.log("[DEBUG] getPoints - campo 'horario' do primeiro ponto:", data.pontos[0]?.horario);
+    console.log("[DEBUG] getPoints - todos os campos do primeiro ponto:", data.pontos[0]);
+  }
   return data.pontos;
 }
 
@@ -24,21 +53,47 @@ export async function getAllCollectionPoints(filters?: {
 
 export async function getPoint(id: string) {
   const data = await apiFetch(`/pontos-coleta/${id}`);
+  console.log(`[DEBUG] getPoint(${id}) - resposta completa:`, JSON.stringify(data, null, 2));
+  console.log(`[DEBUG] getPoint(${id}) - campo 'horario':`, data.ponto?.horario || data?.horario);
   return data.ponto || data;
 }
 
 export async function createPoint(data: any) {
-  return apiFetch("/pontos-coleta", {
+  const formData = toFormData(data);
+  console.log("[DEBUG] createPoint - FormData preparado:");
+  for (let [key, value] of (formData as any).entries()) {
+    if (key === "imagem") {
+      console.log(`  ${key}: [File]`);
+    } else {
+      console.log(`  ${key}: ${value}`);
+    }
+  }
+  const response = await apiFetch("/pontos-coleta", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: formData,
   });
+  console.log("[DEBUG] createPoint - resposta do backend:", JSON.stringify(response, null, 2));
+  console.log("[DEBUG] createPoint - campo 'horario' na resposta:", response?.horario || response?.ponto?.horario);
+  return response;
 }
 
 export async function updatePoint(id: string, data: any) {
-    return apiFetch(`/pontos-coleta/${id}`, {
+    const formData = toFormData(data);
+    console.log(`[DEBUG] updatePoint(${id}) - FormData preparado:`);
+    for (let [key, value] of (formData as any).entries()) {
+      if (key === "imagem") {
+        console.log(`  ${key}: [File]`);
+      } else {
+        console.log(`  ${key}: ${value}`);
+      }
+    }
+    const response = await apiFetch(`/pontos-coleta/${id}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: formData,
     });
+    console.log(`[DEBUG] updatePoint(${id}) - resposta do backend:`, JSON.stringify(response, null, 2));
+    console.log(`[DEBUG] updatePoint(${id}) - campo 'horario' na resposta:`, response?.horario || response?.ponto?.horario);
+    return response;
   }
 
 export async function deletePoint(id: string) {

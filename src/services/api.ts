@@ -12,13 +12,20 @@ export async function apiFetch(path: string, options?: RequestInit) {
     }
   }
 
+  const headers = new Headers(options?.headers);
+  const isFormData = options?.body instanceof FormData;
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options?.headers,
-    },
     ...options,
+    headers,
   });
 
   let data;

@@ -1,6 +1,7 @@
 export const routes = {
   home: "/",
   mapa: "/mapa",
+  favoritos: "/favoritos",
 
   login: "/login",
   cadastro: "/cadastro",

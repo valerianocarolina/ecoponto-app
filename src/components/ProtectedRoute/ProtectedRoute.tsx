@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { routes } from "@/routes/routes";
 
 type Props = {
   children: React.ReactNode;
@@ -17,12 +18,22 @@ export function ProtectedRoute({ children, requiredType }: Props) {
     if (loading) return;
 
     if (!user) {
-      router.push("/login");
+      if (requiredType === "user") {
+        router.push(routes.loginCliente);
+      } else if (requiredType === "cooperative") {
+        router.push(routes.login);
+      } else if (tipo === "user") {
+        router.push(routes.loginCliente);
+      } else if (tipo === "cooperative") {
+        router.push(routes.login);
+      } else {
+        router.push(routes.home);
+      }
       return;
     }
 
     if (requiredType && tipo !== requiredType) {
-      router.push("/");
+      router.push(routes.home);
     }
   }, [user, tipo, loading]);
 
