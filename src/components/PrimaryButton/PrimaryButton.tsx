@@ -10,7 +10,6 @@ export function PrimaryButton({ children, type, ...props }: PrimaryButtonProps) 
     <Button
       className={styles.primaryButton}
       {...props}
-      type="primary"
       htmlType={type}
     >
       {children}

@@ -21,14 +21,14 @@ export default function Home() {
         </p>
 
         <Button
-          title="Sou Cliente"
-          description="Encontre pontos de coleta próximos a você"
+          title="Sou cliente"
+          description="Encontre pontos de coleta proximos a voce"
           icon={<User />}
           onClick={() => router.push(routes.loginCliente)}
         />
 
         <Button
-          title="Sou Empresa"
+          title="Sou empresa"
           description="Gerencie seus pontos de reciclagem"
           icon={<Building2 />}
           onClick={() => router.push(routes.login)}

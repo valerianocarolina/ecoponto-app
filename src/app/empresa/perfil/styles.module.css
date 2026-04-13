@@ -1,0 +1,107 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background-color: hsl(var(--background));
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.loadingIcon {
+  height: 24px;
+  width: 24px;
+  animation: spin 1s linear infinite;
+  color: hsl(var(--primary));
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.content {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 448px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  padding: 20px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 0 0 16px 0;
+}
+
+.section > div {
+  margin-bottom: 16px;
+}
+
+.section > div:last-of-type {
+  margin-bottom: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+
+.dangerSection {
+  border-color: hsl(var(--destructive) / 0.3);
+}
+
+.dangerTitle {
+  color: hsl(var(--destructive));
+}
+
+.dangerText {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.actions > button,
+.actions > div > button {
+  width: 100%;
+}

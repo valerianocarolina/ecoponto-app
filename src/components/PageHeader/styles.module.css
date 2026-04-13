@@ -1,0 +1,41 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  padding: 12px 16px;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  padding: 4px;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+.backBtn:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted) / 0.5);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin: 0;
+  flex: 1;
+}
+
+.spacer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}

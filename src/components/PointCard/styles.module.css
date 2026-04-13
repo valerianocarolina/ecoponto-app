@@ -1,0 +1,95 @@
+.card {
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.cardImage {
+  height: 160px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.cardBody {
+  padding: 16px;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardInfo {
+  flex: 1;
+}
+
+.cardName {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.cardDetail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+}
+
+.cardDetailIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 4px;
+}
+
+.materials {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.materialBadge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.plastico {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.vidro {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.papel {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.metal {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.eletronico {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.oleo {
+  background: #fef9c3;
+  color: #854d0e;
+}
