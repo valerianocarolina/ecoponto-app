@@ -38,22 +38,22 @@ export default function Cadastro() {
     e.preventDefault();
 
     if (!isValidCNPJ(form.cnpj)) {
-      setCnpjError("CNPJ inválido");
+      setCnpjError("CNPJ invalido");
       return;
     }
 
     if (!validateEmail(form.email)) {
-      setEmailError("Email inválido");
+      setEmailError("Email invalido");
       return;
     }
 
     if (form.phone && !validatePhone(form.phone)) {
-      setPhoneError("Telefone inválido");
+      setPhoneError("Telefone invalido");
       return;
     }
 
     if (!form.name || !form.cnpj || !form.email || !form.password) {
-      alert("Preencha os campos obrigatórios");
+      alert("Preencha os campos obrigatorios");
       return;
     }
 
@@ -103,14 +103,14 @@ export default function Cadastro() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <TextField
-            label="Nome da Empresa *"
-            placeholder="EcoRecicla Ltda"
+            label="Nome da empresa"
+            placeholder="EcoRecicla LTDA"
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
           />
 
           <TextField
-            label="CNPJ *"
+            label="CNPJ"
             placeholder="00.000.000/0000-00"
             value={form.cnpj}
             onChange={(e) => {
@@ -122,7 +122,7 @@ export default function Cadastro() {
 
           <TextField
             label="Telefone"
-            placeholder="(11) 99999-0000"
+            placeholder="(00) 00000-0000"
             value={form.phone}
             onChange={(e) => {
               set("phone", e.target.value);
@@ -132,7 +132,7 @@ export default function Cadastro() {
           />
 
           <TextField
-            label="Email *"
+            label="Email"
             type="email"
             placeholder="empresa@email.com"
             value={form.email}
@@ -144,9 +144,9 @@ export default function Cadastro() {
           />
 
           <TextField
-            label="Senha *"
+            label="Senha"
             type="password"
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Minimo 6 caracteres"
             value={form.password}
             onChange={(e) => {
               set("password", e.target.value);
@@ -162,12 +162,12 @@ export default function Cadastro() {
 
         <div className={styles.footer}>
           <p className="text-small">
-            Já tem conta?{" "}
+            Ja tem conta? 
             <span
               className={styles.link}
               onClick={() => router.push(routes.login)}
             >
-              Faça login
+              Faca login
             </span>
           </p>
         </div>

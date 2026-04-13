@@ -8,6 +8,8 @@ export const routes = {
   loginCliente: "/login/cliente",
   cadastroCliente: "/cadastro/cliente",
 
+  perfilCliente: "/cliente/perfil",
+
   meusPontos: "/meus-pontos",
-  cadastraPontos: "/cadastra-pontos",
+  cadastraPontos: "/cadastrar-pontos",
 };

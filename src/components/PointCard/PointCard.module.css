@@ -1,0 +1,184 @@
+.card {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  text-align: left;
+  transition: box-shadow 0.2s;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.image {
+  height: 128px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.body {
+  padding: 12px;
+}
+
+.name {
+  font-weight: 600;
+  color: hsl(var(--card-foreground));
+  margin: 0;
+  font-size: 14px;
+}
+
+.infoRow {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0;
+}
+
+.infoIcon {
+  height: 12px;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.distance {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: hsl(var(--primary));
+  margin-bottom: 0;
+}
+
+.badges {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.actions {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.routeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  background-color: hsl(var(--primary));
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: hsl(var(--primary-foreground));
+  transition: opacity 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.routeBtn:hover {
+  opacity: 0.9;
+}
+
+.routeBtn svg {
+  height: 12px;
+  width: 12px;
+}
+
+.favoriteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.2s;
+  padding: 4px;
+}
+
+.favoriteBtn:hover {
+  color: hsl(var(--accent));
+}
+
+.favorited {
+  color: hsl(var(--accent));
+}
+
+.materialBadge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.plastico {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.vidro {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.papel {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.metal {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.eletronico {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.oleo {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.plastico {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.vidro {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.papel {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.metal {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.eletronico {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.oleo {
+  background: #fef9c3;
+  color: #854d0e;
+}
