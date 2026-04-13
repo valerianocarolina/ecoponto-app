@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./styles.module.css";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -37,6 +37,14 @@ const ALL: MaterialType[] = [
 ];
 
 export default function CadastrarPonto() {
+  return (
+    <Suspense fallback={<div className={styles.layout} />}>
+      <CadastrarPontoContent />
+    </Suspense>
+  );
+}
+
+function CadastrarPontoContent() {
   const link = "https://buscacepinter.correios.com.br/";
   const router = useRouter();
 
